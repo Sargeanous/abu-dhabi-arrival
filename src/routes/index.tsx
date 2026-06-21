@@ -240,7 +240,7 @@ function Hero() {
           </h1>
           <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
             SettleSide plans your relocation, then lets you shop home essentials and book
-            trusted services directly — pulling live options from leading retailers and
+            trusted services directly, pulling live options from leading retailers and
             providers. Add pet relocation only if you need it.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -263,11 +263,6 @@ function Hero() {
               <a href="#how">See how it works</a>
             </Button>
           </div>
-          <p className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5"><Globe2 className="h-3.5 w-3.5 text-teal" /> Any city</span>
-            <span className="inline-flex items-center gap-1.5"><Plug className="h-3.5 w-3.5 text-teal" /> Live retailer & provider APIs</span>
-            <span className="inline-flex items-center gap-1.5"><PawPrint className="h-3.5 w-3.5 text-teal" /> Pet add-on</span>
-          </p>
         </div>
 
         {/* Hero visual: assistant card-stack */}
