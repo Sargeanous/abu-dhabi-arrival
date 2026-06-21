@@ -13,21 +13,24 @@ import {
   PawPrint,
   ShieldCheck,
   CalendarDays,
-  MapPin,
   Users,
-  PlaneLanding,
   Home,
   CheckCircle2,
   ArrowRight,
   Compass,
   ListChecks,
-  Stethoscope,
-  FileText,
-  Scale,
   Check,
   Plus,
-  Minus,
-  AlertCircle,
+  Truck,
+  ShoppingBag,
+  Zap,
+  Boxes,
+  Star,
+  Globe2,
+  Plug,
+  MessageSquare,
+  Building2,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,16 +55,17 @@ import { Toaster } from "@/components/ui/sonner";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SettleSide — Settle into Abu Dhabi with less stress" },
+      { title: "SettleSide — Your end-to-end relocation assistant" },
       {
         name: "description",
         content:
-          "SettleSide helps busy expats coordinate apartment move-in setup and pet relocation readiness in Abu Dhabi. Calm, practical, on-the-ground support.",
+          "SettleSide is the all-in-one assistant for moving to a new city: plan your move, shop home essentials, book trusted services, and add pet relocation if you need it — all in one place.",
       },
-      { property: "og:title", content: "SettleSide — Settle into Abu Dhabi with less stress" },
+      { property: "og:title", content: "SettleSide — Your end-to-end relocation assistant" },
       {
         property: "og:description",
-        content: "Move-in setup and pet relocation readiness for Abu Dhabi expats.",
+        content:
+          "Plan, shop, and book everything your move needs — from movers and internet to furniture and optional pet relocation.",
       },
     ],
   }),
@@ -134,9 +138,7 @@ function IconBubble({
     navy: "bg-[oklch(0.93_0.02_240)] text-navy",
   };
   return (
-    <div
-      className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${tones[tone]}`}
-    >
+    <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${tones[tone]}`}>
       {children}
     </div>
   );
@@ -145,10 +147,10 @@ function IconBubble({
 /* ---------- Nav ---------- */
 
 const NAV_LINKS = [
-  { href: "#services", label: "Services" },
   { href: "#how", label: "How it works" },
-  { href: "#packages", label: "Packages" },
-  { href: "#pet", label: "Pet readiness" },
+  { href: "#catalog", label: "Shop essentials" },
+  { href: "#services", label: "Book services" },
+  { href: "#addons", label: "Add-ons" },
   { href: "#faq", label: "FAQ" },
 ];
 
@@ -178,7 +180,7 @@ function Nav() {
         </nav>
         <div className="hidden md:block">
           <Button asChild className="rounded-full bg-teal px-5 text-primary-foreground hover:bg-teal/90">
-            <a href="#inquiry">Plan my move-in</a>
+            <a href="#inquiry">Start my move</a>
           </Button>
         </div>
         <button
@@ -207,7 +209,7 @@ function Nav() {
               className="mt-2 w-full rounded-full bg-teal text-primary-foreground hover:bg-teal/90"
             >
               <a href="#inquiry" onClick={() => setOpen(false)}>
-                Plan my move-in
+                Start my move
               </a>
             </Button>
           </div>
@@ -231,14 +233,15 @@ function Hero() {
       />
       <div className="mx-auto grid max-w-6xl items-center gap-12 section-px py-16 md:grid-cols-[1.05fr_1fr] md:py-24 lg:py-28">
         <div>
-          <SectionLabel>Abu Dhabi · Concierge move-in support</SectionLabel>
+          <SectionLabel>End-to-end relocation assistant</SectionLabel>
           <h1 className="mt-6 text-4xl text-foreground sm:text-5xl md:text-[3.75rem] md:leading-[1.02]">
-            Settle into Abu Dhabi
-            <span className="text-teal"> with less stress.</span>
+            Your entire move,
+            <span className="text-teal"> in one place.</span>
           </h1>
           <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
-            SettleSide helps busy expats coordinate move-in setup, apartment handover
-            tasks, home essentials, and pet relocation readiness — before and after arrival.
+            SettleSide plans your relocation, then lets you shop home essentials and book
+            trusted services directly — pulling live options from leading retailers and
+            providers. Add pet relocation only if you need it.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button
@@ -247,7 +250,7 @@ function Hero() {
               className="rounded-full bg-teal px-6 text-primary-foreground hover:bg-teal/90"
             >
               <a href="#inquiry">
-                Plan my move-in
+                Start my move
                 <ArrowRight className="ml-1 h-4 w-4" />
               </a>
             </Button>
@@ -257,35 +260,36 @@ function Hero() {
               variant="outline"
               className="rounded-full border-border bg-background hover:bg-sand"
             >
-              <a href="#services">See services</a>
+              <a href="#how">See how it works</a>
             </Button>
           </div>
-          <p className="mt-6 text-sm text-muted-foreground">
-            Apartment setup · Vendor coordination · Pet move readiness · Abu Dhabi
+          <p className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5"><Globe2 className="h-3.5 w-3.5 text-teal" /> Any city</span>
+            <span className="inline-flex items-center gap-1.5"><Plug className="h-3.5 w-3.5 text-teal" /> Live retailer & provider APIs</span>
+            <span className="inline-flex items-center gap-1.5"><PawPrint className="h-3.5 w-3.5 text-teal" /> Pet add-on</span>
           </p>
         </div>
 
-        {/* Hero visual: stacked cards */}
+        {/* Hero visual: assistant card-stack */}
         <div className="relative">
           <div className="relative mx-auto grid max-w-md gap-4">
-            {/* Top: checklist */}
             <Card className="relative">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5 text-teal" />
-                  Abu Dhabi · Al Reem
+                  <ListChecks className="h-3.5 w-3.5 text-teal" />
+                  Your move plan
                 </div>
                 <span className="rounded-full bg-sand px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-teal">
-                  Handover
+                  42 days to go
                 </span>
               </div>
-              <h3 className="mt-3 font-serif text-lg text-foreground">Move-in checklist</h3>
+              <h3 className="mt-3 font-serif text-lg text-foreground">Berlin → Lisbon</h3>
               <ul className="mt-3 space-y-2 text-sm">
                 {[
-                  ["Apartment handover photos", true],
-                  ["Deep cleaning scheduled", true],
-                  ["Curtains measured", false],
-                  ["Internet activation", false],
+                  ["Movers booked — Atlas Relocations", true],
+                  ["Internet activation scheduled", true],
+                  ["Sofa & mattress ordered", false],
+                  ["Cleaning on move-out day", false],
                 ].map(([label, done]) => (
                   <li key={label as string} className="flex items-center gap-2.5">
                     <span
@@ -297,13 +301,7 @@ function Hero() {
                     >
                       {done ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
                     </span>
-                    <span
-                      className={
-                        done
-                          ? "text-muted-foreground line-through"
-                          : "text-foreground"
-                      }
-                    >
+                    <span className={done ? "text-muted-foreground line-through" : "text-foreground"}>
                       {label as string}
                     </span>
                   </li>
@@ -311,22 +309,19 @@ function Hero() {
               </ul>
               <div className="mt-4 flex items-center gap-2">
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-sand-deep">
-                  <div className="h-full w-[55%] rounded-full bg-teal" />
+                  <div className="h-full w-[62%] rounded-full bg-teal" />
                 </div>
-                <span className="text-xs font-medium text-muted-foreground">55%</span>
+                <span className="text-xs font-medium text-muted-foreground">62%</span>
               </div>
             </Card>
 
-            {/* Middle two columns */}
             <div className="grid grid-cols-2 gap-4">
               <Card className="p-5">
                 <IconBubble tone="terracotta">
-                  <Sofa className="h-5 w-5" />
+                  <ShoppingBag className="h-5 w-5" />
                 </IconBubble>
-                <h4 className="mt-3 font-serif text-base text-foreground">Home essentials</h4>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Mattress · Curtains · Basics
-                </p>
+                <h4 className="mt-3 font-serif text-base text-foreground">Live catalog</h4>
+                <p className="mt-1 text-xs text-muted-foreground">IKEA · Wayfair · Amazon</p>
                 <div className="mt-3 flex -space-x-1.5">
                   <div className="h-6 w-6 rounded-md bg-terracotta-soft hairline" />
                   <div className="h-6 w-6 rounded-md bg-sand-deep hairline" />
@@ -335,28 +330,25 @@ function Hero() {
               </Card>
               <Card className="p-5">
                 <IconBubble tone="sage">
-                  <PawPrint className="h-5 w-5" />
+                  <Truck className="h-5 w-5" />
                 </IconBubble>
-                <h4 className="mt-3 font-serif text-base text-foreground">Pet readiness</h4>
-                <p className="mt-1 text-xs text-muted-foreground">Timeline · Documents</p>
-                <div className="mt-3 text-xs font-medium text-[oklch(0.42_0.05_155)]">
-                  4 of 7 ready
-                </div>
+                <h4 className="mt-3 font-serif text-base text-foreground">Service slots</h4>
+                <p className="mt-1 text-xs text-muted-foreground">3 movers available</p>
+                <div className="mt-3 text-xs font-medium text-[oklch(0.42_0.05_155)]">Tue · Wed · Sat</div>
               </Card>
             </div>
 
-            {/* Bottom: timeline */}
             <Card className="p-5">
               <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                 <CalendarDays className="h-3.5 w-3.5 text-teal" />
-                First-week setup
+                End-to-end timeline
               </div>
               <div className="mt-3 flex items-center gap-2">
                 {[
-                  { d: "T-14", label: "Plan", done: true },
-                  { d: "T-3", label: "Handover", done: true },
-                  { d: "Day 1", label: "Move-in", done: false },
-                  { d: "Day 7", label: "Settled", done: false },
+                  { d: "T-60", label: "Plan", done: true },
+                  { d: "T-21", label: "Book", done: true },
+                  { d: "Day 1", label: "Move", done: false },
+                  { d: "Day 14", label: "Settled", done: false },
                 ].map((s, i) => (
                   <div key={s.d} className="flex flex-1 items-center gap-2">
                     <div className="flex flex-col items-center">
@@ -369,17 +361,11 @@ function Hero() {
                       >
                         {i + 1}
                       </span>
-                      <span className="mt-1 text-[10px] font-medium text-foreground">
-                        {s.label}
-                      </span>
+                      <span className="mt-1 text-[10px] font-medium text-foreground">{s.label}</span>
                       <span className="text-[9px] text-muted-foreground">{s.d}</span>
                     </div>
                     {i < 3 && (
-                      <div
-                        className={`h-px flex-1 ${
-                          s.done ? "bg-teal/40" : "bg-border"
-                        }`}
-                      />
+                      <div className={`h-px flex-1 ${s.done ? "bg-teal/40" : "bg-border"}`} />
                     )}
                   </div>
                 ))}
@@ -392,165 +378,23 @@ function Hero() {
   );
 }
 
-/* ---------- Problem ---------- */
+/* ---------- Logos / integrations strip ---------- */
 
-const PROBLEMS = [
-  {
-    icon: ListChecks,
-    title: "Too many moving parts",
-    body: "Vendors, deliveries, building rules, utilities, and setup tasks quickly become hard to track.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Hard to know who to trust",
-    body: "New arrivals often rely on random recommendations and rushed decisions.",
-  },
-  {
-    icon: PawPrint,
-    title: "Pets make timing critical",
-    body: "Pet relocation requires preparation, documents, providers, appointments, and careful timing.",
-  },
+const PARTNERS = [
+  "IKEA", "Amazon", "Wayfair", "Vodafone", "Atlas Movers", "Helpling", "Made.com", "Allianz",
 ];
 
-function Problem() {
+function Partners() {
   return (
-    <section className="bg-sand">
-      <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
-        <SectionHeader
-          eyebrow="The reality"
-          title="Moving is not just finding an apartment."
-          body="Once the lease is signed, the real work starts: handover checks, cleaning, internet, curtains, furniture, maintenance, building rules, delivery slots — and if you have a pet, a whole extra layer of timing, documents, and provider coordination."
-        />
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {PROBLEMS.map((p) => (
-            <Card key={p.title}>
-              <IconBubble tone="terracotta">
-                <p.icon className="h-5 w-5" />
-              </IconBubble>
-              <h3 className="mt-5 font-serif text-xl text-foreground">{p.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.body}</p>
-            </Card>
+    <section className="border-y border-border bg-card/50">
+      <div className="mx-auto max-w-6xl section-px py-8">
+        <p className="text-center text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          Live inventory & availability from leading retailers and providers
+        </p>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm font-medium text-foreground/60">
+          {PARTNERS.map((p) => (
+            <span key={p} className="font-serif text-lg tracking-tight">{p}</span>
           ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Services ---------- */
-
-const SERVICES = [
-  {
-    icon: ClipboardCheck,
-    title: "Apartment handover support",
-    body: "Checklist, photo evidence, defect notes, building rules, and handover readiness.",
-  },
-  {
-    icon: Sparkles,
-    title: "Move-in setup coordination",
-    body: "Cleaning, handyman, curtains, mattress, basic furniture, and essentials planning.",
-  },
-  {
-    icon: Compass,
-    title: "Vendor shortlist",
-    body: "Curated options for cleaning, curtains, handyman, furniture, internet, and car rental.",
-  },
-  {
-    icon: CalendarDays,
-    title: "First-week setup plan",
-    body: "A practical arrival timeline so you know what to do before and after landing.",
-  },
-  {
-    icon: Wifi,
-    title: "Remote support",
-    body: "Guidance before you arrive, including planning calls and checklist-based support.",
-  },
-  {
-    icon: PawPrint,
-    title: "Pet relocation readiness",
-    body: "Timeline, document checklist, provider comparison, vet appointment planning, and owner-side preparation.",
-  },
-];
-
-function Services() {
-  return (
-    <section id="services" className="scroll-mt-20">
-      <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
-        <SectionHeader
-          eyebrow="Services"
-          title="Practical support for your first weeks in Abu Dhabi."
-        />
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {SERVICES.map((s) => (
-            <Card key={s.title}>
-              <IconBubble>
-                <s.icon className="h-5 w-5" />
-              </IconBubble>
-              <h3 className="mt-5 font-serif text-xl text-foreground">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Pet readiness ---------- */
-
-const PET_CARDS = [
-  {
-    icon: CalendarDays,
-    title: "Timeline review",
-    body: "Understand when to start and what milestones to track.",
-  },
-  {
-    icon: FileText,
-    title: "Document checklist",
-    body: "Organize the information your licensed pet relocation provider or vet may request.",
-  },
-  {
-    icon: Scale,
-    title: "Provider comparison",
-    body: "Compare quotes, services, inclusions, exclusions, and questions to ask.",
-  },
-  {
-    icon: PlaneLanding,
-    title: "Arrival planning",
-    body: "Prepare the first days in Abu Dhabi for both owner and pet.",
-  },
-];
-
-function PetReadiness() {
-  return (
-    <section id="pet" className="scroll-mt-20 bg-sand">
-      <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
-        <SectionHeader
-          eyebrow="Pet readiness"
-          title="Moving with a pet? We help you prepare, not panic."
-          body="SettleSide does not act as a veterinary authority, airline, customs broker, or pet transporter. Instead, we help owners organize the process, compare professional providers, understand timelines, prepare questions, and avoid last-minute confusion."
-        />
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {PET_CARDS.map((c) => (
-            <Card key={c.title} className="p-5">
-              <IconBubble tone="sage">
-                <c.icon className="h-5 w-5" />
-              </IconBubble>
-              <h3 className="mt-4 font-serif text-lg text-foreground">{c.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{c.body}</p>
-            </Card>
-          ))}
-        </div>
-        <div className="mt-8 rounded-2xl border border-terracotta/30 bg-terracotta-soft/60 p-5 sm:p-6">
-          <div className="flex gap-3">
-            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-terracotta" />
-            <p className="text-sm leading-relaxed text-foreground">
-              <span className="font-semibold">Important:</span> Pet travel rules and
-              requirements can change. SettleSide provides coordination and readiness
-              support, not veterinary, airline, customs, or legal advice. Final requirements
-              should always be confirmed with licensed providers and relevant authorities.
-            </p>
-          </div>
         </div>
       </div>
     </section>
@@ -561,20 +405,24 @@ function PetReadiness() {
 
 const STEPS = [
   {
-    title: "Tell us your situation",
-    body: "Arrival date, apartment status, pet status, family/couple/single setup, and priorities.",
+    icon: ClipboardCheck,
+    title: "Tell us about your move",
+    body: "Origin, destination, dates, household size, and what matters most. We build your plan in minutes.",
   },
   {
-    title: "Get a move-in plan",
-    body: "We map what needs to happen before arrival, during handover, and in the first week.",
+    icon: ListChecks,
+    title: "Get a personalized timeline",
+    body: "An end-to-end checklist from packing to settled, with the right tasks at the right time.",
   },
   {
-    title: "Coordinate the essentials",
-    body: "We help shortlist vendors, track tasks, and reduce last-minute chaos.",
+    icon: ShoppingBag,
+    title: "Shop & book in one place",
+    body: "Browse live options for furniture, essentials, movers, internet, cleaning, and more — pulled directly from retailer and provider APIs.",
   },
   {
-    title: "Settle in",
-    body: "You arrive with a clearer plan, fewer unknowns, and a home setup path.",
+    icon: CheckCircle2,
+    title: "Track everything until settled",
+    body: "Orders, bookings, and deliveries all tracked together. Add optional services like pet relocation any time.",
   },
 ];
 
@@ -582,150 +430,20 @@ function HowItWorks() {
   return (
     <section id="how" className="scroll-mt-20">
       <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
-        <SectionHeader eyebrow="How it works" title="A calmer way to arrive." />
+        <SectionHeader
+          eyebrow="How it works"
+          title="One assistant from first box to last unpacked."
+          body="SettleSide replaces a dozen tabs, spreadsheets, and group chats with a single guided flow."
+        />
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((s, i) => (
-            <div key={s.title} className="relative">
-              <Card className="h-full">
-                <span className="font-serif text-2xl text-terracotta">
-                  0{i + 1}
-                </span>
-                <h3 className="mt-3 font-serif text-xl text-foreground">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-              </Card>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Packages ---------- */
-
-const PACKAGES = [
-  {
-    name: "Move-In Plan",
-    blurb: "For people who want clarity before arriving.",
-    price: "Custom quote",
-    includes: [
-      "1 planning call",
-      "Personalized move-in checklist",
-      "First-week setup timeline",
-      "Vendor guidance",
-      "Apartment readiness checklist",
-    ],
-    cta: "Request move-in plan",
-    featured: false,
-  },
-  {
-    name: "Apartment Setup Support",
-    blurb: "For busy expats who need help coordinating the essentials.",
-    price: "From — custom quote",
-    includes: [
-      "Move-in planning",
-      "Vendor shortlist",
-      "Cleaning / handyman / curtains guidance",
-      "Home essentials checklist",
-      "Handover support checklist",
-      "WhatsApp-style task tracking",
-    ],
-    cta: "Request setup support",
-    featured: true,
-  },
-  {
-    name: "Home + Pet Readiness",
-    blurb: "For expats moving with a dog or cat.",
-    price: "Custom quote",
-    includes: [
-      "Apartment setup support",
-      "Pet move readiness checklist",
-      "Pet relocation provider comparison",
-      "Pet travel timeline review",
-      "Vet appointment planning checklist",
-      "Arrival plan for owner and pet",
-    ],
-    cta: "Request pet readiness support",
-    featured: false,
-  },
-];
-
-function Packages() {
-  return (
-    <section id="packages" className="scroll-mt-20 bg-sand">
-      <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
-        <SectionHeader
-          eyebrow="Packages"
-          title="Choose the support level you need."
-          align="center"
-        />
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {PACKAGES.map((p) => (
-            <div
-              key={p.name}
-              className={`relative flex flex-col rounded-2xl bg-card p-7 shadow-soft transition-shadow hover:shadow-card ${
-                p.featured
-                  ? "border-2 border-teal shadow-lift"
-                  : "hairline"
-              }`}
-            >
-              {p.featured && (
-                <span className="absolute -top-3 left-7 rounded-full bg-teal px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
-                  Most requested
-                </span>
-              )}
-              <h3 className="font-serif text-2xl text-foreground">{p.name}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{p.blurb}</p>
-              <div className="mt-5 text-sm font-medium text-teal">{p.price}</div>
-              <ul className="mt-5 space-y-3 border-t border-border pt-5">
-                {p.includes.map((i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-sm text-foreground">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-teal" />
-                    <span>{i}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button
-                asChild
-                className={`mt-7 w-full rounded-full ${
-                  p.featured
-                    ? "bg-teal text-primary-foreground hover:bg-teal/90"
-                    : "bg-foreground text-background hover:bg-foreground/90"
-                }`}
-              >
-                <a href="#inquiry">{p.cta}</a>
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Who this is for ---------- */
-
-const AUDIENCE = [
-  { icon: Compass, title: "You are moving soon and don’t know where to start" },
-  { icon: KeyRound, title: "You found an apartment but need help after the keys" },
-  { icon: Home, title: "You are arriving before your home is fully ready" },
-  { icon: PawPrint, title: "You are moving with a pet and want a clearer plan" },
-];
-
-function WhoFor() {
-  return (
-    <section className="scroll-mt-20">
-      <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
-        <SectionHeader eyebrow="Who it’s for" title="Built for busy Abu Dhabi newcomers." />
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {AUDIENCE.map((a) => (
-            <Card key={a.title} className="p-6">
-              <IconBubble tone="navy">
-                <a.icon className="h-5 w-5" />
-              </IconBubble>
-              <p className="mt-5 font-serif text-lg leading-snug text-foreground">
-                {a.title}
-              </p>
+            <Card key={s.title} className="h-full">
+              <div className="flex items-center justify-between">
+                <IconBubble><s.icon className="h-5 w-5" /></IconBubble>
+                <span className="font-serif text-2xl text-terracotta">0{i + 1}</span>
+              </div>
+              <h3 className="mt-5 font-serif text-xl text-foreground">{s.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
             </Card>
           ))}
         </div>
@@ -734,22 +452,200 @@ function WhoFor() {
   );
 }
 
-/* ---------- Why SettleSide (comparison) ---------- */
+/* ---------- Catalog: Home essentials ---------- */
+
+type Product = {
+  category: string;
+  name: string;
+  retailer: string;
+  price: string;
+  rating: number;
+  swatch: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+const PRODUCTS: Product[] = [
+  { category: "Mattress", name: "Hybrid Memory Foam Queen", retailer: "Emma", price: "€599", rating: 4.7, swatch: "bg-sand-deep", icon: Sofa },
+  { category: "Sofa", name: "Linen 3-Seater · Sand", retailer: "Made.com", price: "€849", rating: 4.5, swatch: "bg-terracotta-soft", icon: Sofa },
+  { category: "Kitchen starter", name: "30-piece essentials box", retailer: "IKEA", price: "€129", rating: 4.6, swatch: "bg-[oklch(0.93_0.03_150)]", icon: Boxes },
+  { category: "Internet", name: "1 Gbps fiber · no contract", retailer: "Vodafone", price: "€39/mo", rating: 4.3, swatch: "bg-[oklch(0.93_0.02_240)]", icon: Wifi },
+];
+
+function CatalogTeaser() {
+  return (
+    <section id="catalog" className="scroll-mt-20 bg-sand">
+      <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
+        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <SectionHeader
+            eyebrow="Shop essentials"
+            title="A live catalog tuned to your new home."
+            body="We pull real-time inventory, pricing, and delivery slots from retailers in your destination — so you compare and order without leaving SettleSide."
+          />
+          <div className="hidden items-center gap-2 rounded-full bg-card px-4 py-2 text-xs font-medium text-muted-foreground hairline md:inline-flex">
+            <Plug className="h-3.5 w-3.5 text-teal" /> Powered by retailer APIs
+          </div>
+        </div>
+
+        <div className="mt-10 flex items-center gap-2 rounded-full bg-card px-4 py-2.5 shadow-soft hairline">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Search "queen mattress, delivery this week"…</span>
+          <span className="ml-auto rounded-full bg-teal px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary-foreground">
+            Live
+          </span>
+        </div>
+
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {PRODUCTS.map((p) => (
+            <Card key={p.name} className="flex flex-col p-5">
+              <div className={`relative h-32 overflow-hidden rounded-xl ${p.swatch}`}>
+                <div className="absolute inset-0 grid place-items-center">
+                  <p.icon className="h-12 w-12 text-foreground/30" />
+                </div>
+                <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground">
+                  {p.category}
+                </span>
+              </div>
+              <h3 className="mt-4 font-serif text-base text-foreground">{p.name}</h3>
+              <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Star className="h-3 w-3 fill-terracotta text-terracotta" />
+                <span>{p.rating}</span>
+                <span>·</span>
+                <span>{p.retailer}</span>
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                <span className="font-serif text-lg text-foreground">{p.price}</span>
+                <Button size="sm" className="rounded-full bg-foreground px-4 text-background hover:bg-foreground/90">
+                  Add
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Catalog shown for illustration. Live products vary by destination and availability.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Services marketplace ---------- */
+
+type Service = {
+  icon: React.ComponentType<{ className?: string }>;
+  category: string;
+  body: string;
+  providers: string;
+};
+
+const SERVICES: Service[] = [
+  { icon: Truck, category: "Movers & shipping", body: "Compare quotes from vetted international and local movers.", providers: "12 providers" },
+  { icon: Sparkles, category: "Cleaning", body: "Move-in & move-out deep cleans booked in a few taps.", providers: "8 providers" },
+  { icon: Wifi, category: "Internet & utilities", body: "Set up fiber, mobile, power, and water on day one.", providers: "Local telcos" },
+  { icon: Wrench, category: "Handyman & install", body: "Curtains, TV mount, assembly — booked to your move-in date.", providers: "20+ pros" },
+  { icon: ShieldCheck, category: "Insurance", body: "Renters and contents cover from licensed brokers.", providers: "5 brokers" },
+  { icon: Building2, category: "Storage", body: "Short-term storage for the awkward gap between homes.", providers: "Local & national" },
+];
+
+function ServicesMarketplace() {
+  return (
+    <section id="services" className="scroll-mt-20">
+      <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
+        <SectionHeader
+          eyebrow="Book services"
+          title="Every service your move needs — already connected."
+          body="From international movers to a same-day handyman, we surface live availability from trusted providers in your city."
+        />
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {SERVICES.map((s) => (
+            <Card key={s.category} className="flex h-full flex-col">
+              <IconBubble><s.icon className="h-5 w-5" /></IconBubble>
+              <h3 className="mt-5 font-serif text-xl text-foreground">{s.category}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+              <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
+                <span className="text-xs font-medium text-muted-foreground">{s.providers}</span>
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-teal">
+                  Browse <ArrowRight className="h-3 w-3" />
+                </span>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Add-ons (including Pet) ---------- */
+
+const ADDONS = [
+  {
+    icon: PawPrint,
+    title: "Pet relocation",
+    body: "Optional. If you're moving with a dog, cat, or other pet, we plan the timeline, compare licensed transporters, and track documents.",
+    tag: "Optional add-on",
+    tone: "sage" as const,
+  },
+  {
+    icon: Users,
+    title: "Family & school search",
+    body: "Shortlist schools, daycares, and family-friendly neighborhoods at your destination.",
+    tag: "Optional add-on",
+    tone: "terracotta" as const,
+  },
+  {
+    icon: Globe2,
+    title: "Paperwork & visas",
+    body: "Guidance and provider referrals for residency, banking, and address registration.",
+    tag: "Optional add-on",
+    tone: "navy" as const,
+  },
+];
+
+function AddOns() {
+  return (
+    <section id="addons" className="scroll-mt-20 bg-sand">
+      <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
+        <SectionHeader
+          eyebrow="Add-ons"
+          title="Add what you need. Skip what you don't."
+          body="Most moves are just home and services. Layer on extras only when they apply to you."
+        />
+        <div className="mt-12 grid gap-5 md:grid-cols-3">
+          {ADDONS.map((a) => (
+            <Card key={a.title} className="flex h-full flex-col">
+              <div className="flex items-center justify-between">
+                <IconBubble tone={a.tone}><a.icon className="h-5 w-5" /></IconBubble>
+                <span className="rounded-full bg-card px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground hairline">
+                  {a.tag}
+                </span>
+              </div>
+              <h3 className="mt-5 font-serif text-xl text-foreground">{a.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{a.body}</p>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Why SettleSide ---------- */
 
 const TYPICAL = [
-  "Random vendor recommendations",
-  "Scattered WhatsApp messages",
-  "Last-minute decisions",
-  "No clear setup timeline",
-  "Pet process handled too late",
+  "20 browser tabs and spreadsheets",
+  "Hunting for trusted providers city by city",
+  "Manual price comparisons across retailers",
+  "Forgotten tasks before move day",
+  "Pet logistics scrambled at the last minute",
 ];
 const SS = [
-  "Clear move-in plan",
-  "Organized task checklist",
-  "Vendor options in one place",
-  "Handover and setup priorities",
-  "Pet readiness timeline",
-  "Calm coordination before arrival",
+  "One assistant, one timeline",
+  "Pre-vetted retailers & providers connected via API",
+  "Live pricing and availability side by side",
+  "Reminders mapped to your move date",
+  "Pet relocation added only if you need it",
 ];
 
 function WhyUs() {
@@ -762,13 +658,13 @@ function WhyUs() {
             Why SettleSide
           </span>
           <h2 className="mt-5 font-serif text-3xl text-background sm:text-4xl md:text-[2.75rem] md:leading-[1.1]">
-            Support from your side of the move.
+            The first relocation tool that actually does the work.
           </h2>
         </div>
         <div className="mt-12 grid gap-5 md:grid-cols-2">
           <div className="rounded-2xl border border-background/15 bg-background/[0.04] p-7">
             <div className="text-xs font-medium uppercase tracking-wider text-background/60">
-              Typical approach
+              Without SettleSide
             </div>
             <ul className="mt-5 space-y-3">
               {TYPICAL.map((t) => (
@@ -781,7 +677,7 @@ function WhyUs() {
           </div>
           <div className="rounded-2xl border border-teal/40 bg-teal/15 p-7">
             <div className="text-xs font-medium uppercase tracking-wider text-teal-soft">
-              SettleSide approach
+              With SettleSide
             </div>
             <ul className="mt-5 space-y-3">
               {SS.map((t) => (
@@ -798,36 +694,59 @@ function WhyUs() {
   );
 }
 
+/* ---------- Who this is for ---------- */
+
+const AUDIENCE = [
+  { icon: Compass, title: "You're moving cities or countries and don't know where to start" },
+  { icon: Home, title: "You've signed a lease and need to furnish & set up fast" },
+  { icon: Zap, title: "You want fewer apps, fewer calls, and faster decisions" },
+  { icon: MessageSquare, title: "You'd rather book everything once than chase ten providers" },
+];
+
+function WhoFor() {
+  return (
+    <section className="scroll-mt-20">
+      <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
+        <SectionHeader eyebrow="Who it's for" title="Built for anyone setting up a new home." />
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {AUDIENCE.map((a) => (
+            <Card key={a.title} className="p-6">
+              <IconBubble tone="navy"><a.icon className="h-5 w-5" /></IconBubble>
+              <p className="mt-5 font-serif text-lg leading-snug text-foreground">{a.title}</p>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ---------- FAQ ---------- */
 
 const FAQS = [
   {
+    q: "Which cities or countries do you support?",
+    a: "SettleSide is built to work in any city. Catalog depth and provider availability grow with each destination as we connect more retailer and service APIs.",
+  },
+  {
+    q: "How does the catalog work?",
+    a: "We integrate directly with retailer and service-provider APIs to pull live inventory, pricing, and delivery availability for your destination. You can compare and check out in one flow.",
+  },
+  {
     q: "Are you a moving company?",
-    a: "No. SettleSide is a move-in coordination and readiness service. We help plan, organize, and coordinate the practical setup around your arrival.",
+    a: "No. SettleSide is a relocation assistant. We plan your move and connect you with trusted movers, cleaners, telcos, retailers, and other providers.",
   },
   {
-    q: "Are you a real estate broker?",
-    a: "No. We do not act as a broker or negotiate property deals. We can support apartment handover and move-in readiness from the tenant’s side.",
+    q: "Do I have to use the pet add-on?",
+    a: "Not at all. Most users skip it. If you're moving with a pet, you can enable pet relocation as an optional module to plan timelines, compare transporters, and track documents.",
   },
   {
-    q: "Do you transport pets?",
-    a: "No. We do not transport pets. We help owners prepare, compare professional pet relocation providers, understand timelines, and organize the process.",
+    q: "Can I use SettleSide before I've found a home?",
+    a: "Yes. Start with the move plan, then add purchases and bookings as your address and dates firm up.",
   },
   {
-    q: "Can you guarantee pet permits or approval?",
-    a: "No. Pet travel requirements are handled by relevant authorities, airlines, vets, and licensed providers. SettleSide provides coordination and readiness support only.",
-  },
-  {
-    q: "Can you help before I arrive in Abu Dhabi?",
-    a: "Yes. Much of the value is planning before arrival so your first week is less chaotic.",
-  },
-  {
-    q: "Can you work with my building or agent?",
-    a: "We can help you prepare questions, checklists, and coordination steps, but the exact scope depends on your situation and building rules.",
-  },
-  {
-    q: "Which areas do you cover?",
-    a: "The initial focus is Abu Dhabi, especially common expat areas such as Al Reem Island, Al Maryah, Saadiyat, Al Raha, Corniche, and nearby areas.",
+    q: "How do you make money?",
+    a: "SettleSide earns referral and partner fees from retailers and providers. You see the same prices you would on their own sites.",
   },
 ];
 
@@ -835,11 +754,7 @@ function FAQ() {
   return (
     <section id="faq" className="scroll-mt-20">
       <div className="mx-auto max-w-3xl section-px py-20 md:py-28">
-        <SectionHeader
-          eyebrow="FAQ"
-          title="Questions, answered."
-          align="center"
-        />
+        <SectionHeader eyebrow="FAQ" title="Questions, answered." align="center" />
         <Accordion type="single" collapsible className="mt-10 space-y-3">
           {FAQS.map((f, i) => (
             <AccordionItem
@@ -851,7 +766,7 @@ function FAQ() {
                 <span className="flex w-full items-center justify-between gap-4">
                   {f.q}
                   <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-sand text-teal transition-transform">
-                    <Plus className="h-4 w-4 group-data-[state=open]:hidden" />
+                    <Plus className="h-4 w-4" />
                   </span>
                 </span>
               </AccordionTrigger>
@@ -869,26 +784,27 @@ function FAQ() {
 /* ---------- Inquiry form ---------- */
 
 const HELP_OPTIONS = [
-  "Move-in planning",
-  "Apartment handover",
+  "Movers & shipping",
+  "Furniture & mattress",
+  "Kitchen & essentials",
   "Cleaning",
-  "Furniture / mattress",
-  "Curtains",
-  "Handyman / maintenance",
-  "Internet / utilities guidance",
-  "Pet move readiness",
-  "Vendor shortlist",
-  "First-week setup",
+  "Internet & utilities",
+  "Handyman / installation",
+  "Insurance",
+  "Storage",
+  "Pet relocation (optional)",
+  "Family & school search (optional)",
 ];
 
 type FormState = {
   name: string;
   email: string;
   whatsapp: string;
-  location: string;
-  arrival: string;
+  origin: string;
+  destination: string;
+  moveDate: string;
   household: string;
-  apartment: string;
+  status: string;
   pet: string;
   help: string[];
   message: string;
@@ -898,11 +814,12 @@ const EMPTY_FORM: FormState = {
   name: "",
   email: "",
   whatsapp: "",
-  location: "",
-  arrival: "",
+  origin: "",
+  destination: "",
+  moveDate: "",
   household: "",
-  apartment: "",
-  pet: "",
+  status: "",
+  pet: "no",
   help: [],
   message: "",
 };
@@ -918,19 +835,15 @@ function InquiryForm() {
   function toggleHelp(label: string) {
     setForm((f) => ({
       ...f,
-      help: f.help.includes(label)
-        ? f.help.filter((h) => h !== label)
-        : [...f.help, label],
+      help: f.help.includes(label) ? f.help.filter((h) => h !== label) : [...f.help, label],
     }));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // TODO: Wire this up to your backend / email service (e.g. Resend, a server function,
-    // or a CRM webhook). For now we log the payload and show a success state.
     console.log("[SettleSide inquiry]", form);
     setSubmitted(true);
-    toast.success("Your move-in request has been received.");
+    toast.success("Your move request has been received.");
   }
 
   if (submitted) {
@@ -940,10 +853,10 @@ function InquiryForm() {
           <CheckCircle2 className="h-7 w-7" />
         </div>
         <h3 className="mt-6 font-serif text-2xl text-foreground sm:text-3xl">
-          Thank you — your move-in request has been received.
+          Thanks — your move request has been received.
         </h3>
         <p className="mt-3 text-muted-foreground">
-          We’ll review your situation and get back to you shortly.
+          We'll build your move plan and reach out shortly with your tailored catalog.
         </p>
         <Button
           variant="outline"
@@ -980,25 +893,33 @@ function InquiryForm() {
               placeholder="you@example.com"
             />
           </Field>
-          <Field label="WhatsApp number">
+          <Field label="WhatsApp / phone">
             <Input
               value={form.whatsapp}
               onChange={(e) => update("whatsapp", e.target.value)}
-              placeholder="+971 ..."
+              placeholder="+1 ..."
             />
           </Field>
-          <Field label="Current country / city">
+          <Field label="Moving from">
             <Input
-              value={form.location}
-              onChange={(e) => update("location", e.target.value)}
-              placeholder="e.g. London, UK"
+              value={form.origin}
+              onChange={(e) => update("origin", e.target.value)}
+              placeholder="City, country"
             />
           </Field>
-          <Field label="Arrival date">
+          <Field label="Moving to" required>
+            <Input
+              required
+              value={form.destination}
+              onChange={(e) => update("destination", e.target.value)}
+              placeholder="City, country"
+            />
+          </Field>
+          <Field label="Target move date">
             <Input
               type="date"
-              value={form.arrival}
-              onChange={(e) => update("arrival", e.target.value)}
+              value={form.moveDate}
+              onChange={(e) => update("moveDate", e.target.value)}
             />
           </Field>
           <Field label="Moving as">
@@ -1014,21 +935,21 @@ function InquiryForm() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Apartment status">
-            <Select value={form.apartment} onValueChange={(v) => update("apartment", v)}>
+          <Field label="Where are you in the process?">
+            <Select value={form.status} onValueChange={(v) => update("status", v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="searching">Still searching</SelectItem>
-                <SelectItem value="shortlisted">Shortlisted apartments</SelectItem>
-                <SelectItem value="signed">Lease signed</SelectItem>
-                <SelectItem value="handover">Handover scheduled</SelectItem>
-                <SelectItem value="moved-in">Already moved in</SelectItem>
+                <SelectItem value="exploring">Just exploring</SelectItem>
+                <SelectItem value="planning">Actively planning</SelectItem>
+                <SelectItem value="signed">Home secured</SelectItem>
+                <SelectItem value="imminent">Moving in 30 days</SelectItem>
+                <SelectItem value="arrived">Already arrived</SelectItem>
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Pet moving with you?">
+          <Field label="Moving with a pet?">
             <Select value={form.pet} onValueChange={(v) => update("pet", v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select..." />
@@ -1038,16 +959,14 @@ function InquiryForm() {
                 <SelectItem value="dog">Yes, dog</SelectItem>
                 <SelectItem value="cat">Yes, cat</SelectItem>
                 <SelectItem value="multiple">Yes, multiple pets</SelectItem>
-                <SelectItem value="unsure">Not sure yet</SelectItem>
+                <SelectItem value="other">Yes, other</SelectItem>
               </SelectContent>
             </Select>
           </Field>
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-foreground">
-            What do you need help with?
-          </Label>
+          <Label className="text-sm font-medium text-foreground">What do you want help with?</Label>
           <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
             {HELP_OPTIONS.map((h) => {
               const checked = form.help.includes(h);
@@ -1060,10 +979,7 @@ function InquiryForm() {
                       : "border-border bg-background text-foreground hover:bg-sand"
                   }`}
                 >
-                  <Checkbox
-                    checked={checked}
-                    onCheckedChange={() => toggleHelp(h)}
-                  />
+                  <Checkbox checked={checked} onCheckedChange={() => toggleHelp(h)} />
                   <span>{h}</span>
                 </label>
               );
@@ -1071,12 +987,12 @@ function InquiryForm() {
           </div>
         </div>
 
-        <Field label="Tell us more">
+        <Field label="Anything else we should know?">
           <Textarea
             rows={4}
             value={form.message}
             onChange={(e) => update("message", e.target.value)}
-            placeholder="Share anything that helps us understand your move."
+            placeholder="Tell us about your move, your home, or your priorities."
           />
         </Field>
 
@@ -1085,7 +1001,7 @@ function InquiryForm() {
           size="lg"
           className="mt-2 w-full rounded-full bg-teal text-primary-foreground hover:bg-teal/90 sm:w-auto sm:self-start sm:px-8"
         >
-          Request settling-in support
+          Build my move plan
           <ArrowRight className="ml-1 h-4 w-4" />
         </Button>
       </form>
@@ -1118,9 +1034,9 @@ function InquirySection() {
     <section id="inquiry" className="scroll-mt-20 bg-sand">
       <div className="mx-auto max-w-4xl section-px py-20 md:py-28">
         <SectionHeader
-          eyebrow="Inquire"
-          title="Planning a move to Abu Dhabi?"
-          body="Tell us where you are in the process and what you need help with."
+          eyebrow="Start your move"
+          title="Tell us about your move."
+          body="We'll build your personalized plan and surface live catalog and service options for your destination."
           align="center"
         />
         <div className="mt-12">
@@ -1143,12 +1059,10 @@ function Footer() {
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-teal text-primary-foreground">
                 <KeyRound className="h-4 w-4" />
               </span>
-              <span className="font-serif text-xl font-semibold text-foreground">
-                SettleSide
-              </span>
+              <span className="font-serif text-xl font-semibold text-foreground">SettleSide</span>
             </div>
             <p className="mt-4 max-w-sm text-sm text-muted-foreground">
-              Move-in setup and pet relocation readiness for Abu Dhabi expats.
+              The end-to-end relocation assistant. Plan, shop, and book your entire move in one place.
             </p>
             <a
               href="mailto:hello@settleside.com"
@@ -1158,42 +1072,34 @@ function Footer() {
             </a>
           </div>
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-foreground">
-              Explore
-            </div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-foreground">Explore</div>
             <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
               {NAV_LINKS.map((l) => (
                 <li key={l.href}>
-                  <a href={l.href} className="hover:text-foreground">
-                    {l.label}
-                  </a>
+                  <a href={l.href} className="hover:text-foreground">{l.label}</a>
                 </li>
               ))}
               <li>
-                <a href="#inquiry" className="hover:text-foreground">
-                  Contact
-                </a>
+                <a href="#inquiry" className="hover:text-foreground">Contact</a>
               </li>
             </ul>
           </div>
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-foreground">
-              Coverage
-            </div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-foreground">Modules</div>
             <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
-              <li>Al Reem Island</li>
-              <li>Al Maryah</li>
-              <li>Saadiyat</li>
-              <li>Al Raha · Corniche</li>
+              <li>Move planning</li>
+              <li>Home essentials catalog</li>
+              <li>Services marketplace</li>
+              <li>Pet relocation add-on</li>
             </ul>
           </div>
         </div>
         <div className="mt-12 border-t border-border pt-6">
           <p className="text-xs leading-relaxed text-muted-foreground">
-            SettleSide provides coordination and readiness support. We are not a moving
-            company, real estate broker, veterinary clinic, airline, customs broker, or
-            legal advisor. Final requirements and service terms should be confirmed with
-            licensed providers and relevant authorities.
+            SettleSide is a relocation assistant connecting users with retailers and service
+            providers via official APIs and partnerships. We are not a moving company, real
+            estate broker, telco, veterinary clinic, airline, customs broker, or legal advisor.
+            Final terms and requirements are set by each provider.
           </p>
           <p className="mt-4 text-xs text-muted-foreground">
             © {new Date().getFullYear()} SettleSide. All rights reserved.
@@ -1212,13 +1118,13 @@ function LandingPage() {
       <Nav />
       <main>
         <Hero />
-        <Problem />
-        <Services />
-        <PetReadiness />
+        <Partners />
         <HowItWorks />
-        <Packages />
-        <WhoFor />
+        <CatalogTeaser />
+        <ServicesMarketplace />
+        <AddOns />
         <WhyUs />
+        <WhoFor />
         <FAQ />
         <InquirySection />
       </main>
@@ -1227,9 +1133,3 @@ function LandingPage() {
     </div>
   );
 }
-
-// Silence unused-import warnings for icons reserved for future content blocks.
-void Users;
-void Wrench;
-void Minus;
-void Stethoscope;
