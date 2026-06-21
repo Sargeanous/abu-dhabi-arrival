@@ -470,16 +470,11 @@ function CatalogTeaser() {
   return (
     <section id="catalog" className="scroll-mt-20 bg-sand">
       <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <SectionHeader
-            eyebrow="Shop essentials"
-            title="A live catalog tuned to your new home."
-            body="We pull real-time inventory, pricing, and delivery slots from retailers in your destination — so you compare and order without leaving SettleSide."
-          />
-          <div className="hidden items-center gap-2 rounded-full bg-card px-4 py-2 text-xs font-medium text-muted-foreground hairline md:inline-flex">
-            <Plug className="h-3.5 w-3.5 text-teal" /> Powered by retailer APIs
-          </div>
-        </div>
+        <SectionHeader
+          eyebrow="Shop essentials"
+          title="A live catalog tuned to your new home."
+          body="We pull real-time inventory, pricing, and delivery slots from retailers in your destination, so you compare and order without leaving SettleSide."
+        />
 
         <div className="mt-10 flex items-center gap-2 rounded-full bg-card px-4 py-2.5 shadow-soft hairline">
           <Search className="h-4 w-4 text-muted-foreground" />
