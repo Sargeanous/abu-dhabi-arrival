@@ -55,17 +55,17 @@ import { Toaster } from "@/components/ui/sonner";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SettleSide — Your end-to-end relocation assistant" },
+      { title: "SettleSide: Your end-to-end relocation assistant" },
       {
         name: "description",
         content:
-          "SettleSide is the all-in-one assistant for moving to a new city: plan your move, shop home essentials, book trusted services, and add pet relocation if you need it — all in one place.",
+          "SettleSide is the all-in-one assistant for moving to a new city: plan your move, shop home essentials, book trusted services, and add pet relocation if you need it, all in one place.",
       },
-      { property: "og:title", content: "SettleSide — Your end-to-end relocation assistant" },
+      { property: "og:title", content: "SettleSide: Your end-to-end relocation assistant" },
       {
         property: "og:description",
         content:
-          "Plan, shop, and book everything your move needs — from movers and internet to furniture and optional pet relocation.",
+          "Plan, shop, and book everything your move needs, from movers and internet to furniture and optional pet relocation.",
       },
     ],
   }),
@@ -240,7 +240,7 @@ function Hero() {
           </h1>
           <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
             SettleSide plans your relocation, then lets you shop home essentials and book
-            trusted services directly — pulling live options from leading retailers and
+            trusted services directly, pulling live options from leading retailers and
             providers. Add pet relocation only if you need it.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -263,11 +263,6 @@ function Hero() {
               <a href="#how">See how it works</a>
             </Button>
           </div>
-          <p className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5"><Globe2 className="h-3.5 w-3.5 text-teal" /> Any city</span>
-            <span className="inline-flex items-center gap-1.5"><Plug className="h-3.5 w-3.5 text-teal" /> Live retailer & provider APIs</span>
-            <span className="inline-flex items-center gap-1.5"><PawPrint className="h-3.5 w-3.5 text-teal" /> Pet add-on</span>
-          </p>
         </div>
 
         {/* Hero visual: assistant card-stack */}
@@ -286,7 +281,7 @@ function Hero() {
               <h3 className="mt-3 font-serif text-lg text-foreground">Berlin → Lisbon</h3>
               <ul className="mt-3 space-y-2 text-sm">
                 {[
-                  ["Movers booked — Atlas Relocations", true],
+                  ["Movers booked: Atlas Relocations", true],
                   ["Internet activation scheduled", true],
                   ["Sofa & mattress ordered", false],
                   ["Cleaning on move-out day", false],
@@ -417,7 +412,7 @@ const STEPS = [
   {
     icon: ShoppingBag,
     title: "Shop & book in one place",
-    body: "Browse live options for furniture, essentials, movers, internet, cleaning, and more — pulled directly from retailer and provider APIs.",
+    body: "Browse live options for furniture, essentials, movers, internet, cleaning, and more, pulled directly from retailer and provider APIs.",
   },
   {
     icon: CheckCircle2,
@@ -475,16 +470,11 @@ function CatalogTeaser() {
   return (
     <section id="catalog" className="scroll-mt-20 bg-sand">
       <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <SectionHeader
-            eyebrow="Shop essentials"
-            title="A live catalog tuned to your new home."
-            body="We pull real-time inventory, pricing, and delivery slots from retailers in your destination — so you compare and order without leaving SettleSide."
-          />
-          <div className="hidden items-center gap-2 rounded-full bg-card px-4 py-2 text-xs font-medium text-muted-foreground hairline md:inline-flex">
-            <Plug className="h-3.5 w-3.5 text-teal" /> Powered by retailer APIs
-          </div>
-        </div>
+        <SectionHeader
+          eyebrow="Shop essentials"
+          title="A live catalog tuned to your new home."
+          body="We pull real-time inventory, pricing, and delivery slots from retailers in your destination, so you compare and order without leaving SettleSide."
+        />
 
         <div className="mt-10 flex items-center gap-2 rounded-full bg-card px-4 py-2.5 shadow-soft hairline">
           <Search className="h-4 w-4 text-muted-foreground" />
@@ -543,7 +533,7 @@ const SERVICES: Service[] = [
   { icon: Truck, category: "Movers & shipping", body: "Compare quotes from vetted international and local movers.", providers: "12 providers" },
   { icon: Sparkles, category: "Cleaning", body: "Move-in & move-out deep cleans booked in a few taps.", providers: "8 providers" },
   { icon: Wifi, category: "Internet & utilities", body: "Set up fiber, mobile, power, and water on day one.", providers: "Local telcos" },
-  { icon: Wrench, category: "Handyman & install", body: "Curtains, TV mount, assembly — booked to your move-in date.", providers: "20+ pros" },
+  { icon: Wrench, category: "Handyman & install", body: "Curtains, TV mount, assembly, booked to your move-in date.", providers: "20+ pros" },
   { icon: ShieldCheck, category: "Insurance", body: "Renters and contents cover from licensed brokers.", providers: "5 brokers" },
   { icon: Building2, category: "Storage", body: "Short-term storage for the awkward gap between homes.", providers: "Local & national" },
 ];
@@ -554,7 +544,7 @@ function ServicesMarketplace() {
       <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
         <SectionHeader
           eyebrow="Book services"
-          title="Every service your move needs — already connected."
+          title="Every service your move needs, already connected."
           body="From international movers to a same-day handyman, we surface live availability from trusted providers in your city."
         />
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -853,7 +843,7 @@ function InquiryForm() {
           <CheckCircle2 className="h-7 w-7" />
         </div>
         <h3 className="mt-6 font-serif text-2xl text-foreground sm:text-3xl">
-          Thanks — your move request has been received.
+          Thanks, your move request has been received.
         </h3>
         <p className="mt-3 text-muted-foreground">
           We'll build your move plan and reach out shortly with your tailored catalog.
@@ -1094,7 +1084,12 @@ function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-12 border-t border-border pt-6">
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5"><Globe2 className="h-3.5 w-3.5 text-teal" /> Any city</span>
+          <span className="inline-flex items-center gap-1.5"><Plug className="h-3.5 w-3.5 text-teal" /> Live retailer & provider APIs</span>
+          <span className="inline-flex items-center gap-1.5"><PawPrint className="h-3.5 w-3.5 text-teal" /> Pet add-on</span>
+        </div>
+        <div className="mt-8 border-t border-border pt-6">
           <p className="text-xs leading-relaxed text-muted-foreground">
             SettleSide is a relocation assistant connecting users with retailers and service
             providers via official APIs and partnerships. We are not a moving company, real
