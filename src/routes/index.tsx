@@ -1084,7 +1084,12 @@ function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-12 border-t border-border pt-6">
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5"><Globe2 className="h-3.5 w-3.5 text-teal" /> Any city</span>
+          <span className="inline-flex items-center gap-1.5"><Plug className="h-3.5 w-3.5 text-teal" /> Live retailer & provider APIs</span>
+          <span className="inline-flex items-center gap-1.5"><PawPrint className="h-3.5 w-3.5 text-teal" /> Pet add-on</span>
+        </div>
+        <div className="mt-8 border-t border-border pt-6">
           <p className="text-xs leading-relaxed text-muted-foreground">
             SettleSide is a relocation assistant connecting users with retailers and service
             providers via official APIs and partnerships. We are not a moving company, real
