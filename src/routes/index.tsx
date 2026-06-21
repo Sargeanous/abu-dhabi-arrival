@@ -281,7 +281,7 @@ function Hero() {
               <h3 className="mt-3 font-serif text-lg text-foreground">Berlin → Lisbon</h3>
               <ul className="mt-3 space-y-2 text-sm">
                 {[
-                  ["Movers booked — Atlas Relocations", true],
+                  ["Movers booked: Atlas Relocations", true],
                   ["Internet activation scheduled", true],
                   ["Sofa & mattress ordered", false],
                   ["Cleaning on move-out day", false],
