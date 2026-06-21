@@ -412,7 +412,7 @@ const STEPS = [
   {
     icon: ShoppingBag,
     title: "Shop & book in one place",
-    body: "Browse live options for furniture, essentials, movers, internet, cleaning, and more — pulled directly from retailer and provider APIs.",
+    body: "Browse live options for furniture, essentials, movers, internet, cleaning, and more, pulled directly from retailer and provider APIs.",
   },
   {
     icon: CheckCircle2,
