@@ -55,17 +55,17 @@ import { Toaster } from "@/components/ui/sonner";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SettleSide — Your end-to-end relocation assistant" },
+      { title: "SettleSide: Your end-to-end relocation assistant" },
       {
         name: "description",
         content:
-          "SettleSide is the all-in-one assistant for moving to a new city: plan your move, shop home essentials, book trusted services, and add pet relocation if you need it — all in one place.",
+          "SettleSide is the all-in-one assistant for moving to a new city: plan your move, shop home essentials, book trusted services, and add pet relocation if you need it, all in one place.",
       },
-      { property: "og:title", content: "SettleSide — Your end-to-end relocation assistant" },
+      { property: "og:title", content: "SettleSide: Your end-to-end relocation assistant" },
       {
         property: "og:description",
         content:
-          "Plan, shop, and book everything your move needs — from movers and internet to furniture and optional pet relocation.",
+          "Plan, shop, and book everything your move needs, from movers and internet to furniture and optional pet relocation.",
       },
     ],
   }),
