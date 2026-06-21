@@ -843,7 +843,7 @@ function InquiryForm() {
           <CheckCircle2 className="h-7 w-7" />
         </div>
         <h3 className="mt-6 font-serif text-2xl text-foreground sm:text-3xl">
-          Thanks — your move request has been received.
+          Thanks, your move request has been received.
         </h3>
         <p className="mt-3 text-muted-foreground">
           We'll build your move plan and reach out shortly with your tailored catalog.
