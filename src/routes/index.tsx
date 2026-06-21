@@ -533,7 +533,7 @@ const SERVICES: Service[] = [
   { icon: Truck, category: "Movers & shipping", body: "Compare quotes from vetted international and local movers.", providers: "12 providers" },
   { icon: Sparkles, category: "Cleaning", body: "Move-in & move-out deep cleans booked in a few taps.", providers: "8 providers" },
   { icon: Wifi, category: "Internet & utilities", body: "Set up fiber, mobile, power, and water on day one.", providers: "Local telcos" },
-  { icon: Wrench, category: "Handyman & install", body: "Curtains, TV mount, assembly — booked to your move-in date.", providers: "20+ pros" },
+  { icon: Wrench, category: "Handyman & install", body: "Curtains, TV mount, assembly, booked to your move-in date.", providers: "20+ pros" },
   { icon: ShieldCheck, category: "Insurance", body: "Renters and contents cover from licensed brokers.", providers: "5 brokers" },
   { icon: Building2, category: "Storage", body: "Short-term storage for the awkward gap between homes.", providers: "Local & national" },
 ];
@@ -544,7 +544,7 @@ function ServicesMarketplace() {
       <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
         <SectionHeader
           eyebrow="Book services"
-          title="Every service your move needs — already connected."
+          title="Every service your move needs, already connected."
           body="From international movers to a same-day handyman, we surface live availability from trusted providers in your city."
         />
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
