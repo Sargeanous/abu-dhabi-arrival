@@ -26,7 +26,13 @@ The dev server prints the local URL, usually `http://localhost:5173`.
 - `POST /api/admin/catalog-import` - import catalog rows from CSV text.
 - `POST /api/admin/catalog-map` - AI-map a provider CSV with arbitrary column names onto the SettleSide catalog format. Body: `{ "csv": "..." }`. Returns the normalized CSV for review before importing.
 
-Open `/admin` locally for the catalog operations console. Admin routes accept no token in local development; set `SETTLESIDE_ADMIN_TOKEN` for deployed environments and send `Authorization: Bearer <token>`.
+## Admin Access
+
+Open `/admin` for the catalog operations console. Access to `/api/admin/*` is granted by any of:
+
+1. **Supabase Auth session (primary)** - admins sign in with email and password on the `/admin` page. Create an admin with `node scripts/create-admin.mjs <email> <password>` (the user gets `app_metadata.role = "admin"`, which the server requires). Sessions last one hour; the console re-prompts on expiry.
+2. **Static token (break-glass / scripting)** - set `SETTLESIDE_ADMIN_TOKEN` and send `Authorization: Bearer <token>`.
+3. **Zero-config development only** - when neither Supabase nor a static token is configured and `NODE_ENV` is not production, admin routes are open. Production never bypasses auth.
 
 ## Storage
 

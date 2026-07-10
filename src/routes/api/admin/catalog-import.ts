@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/admin/catalog-import")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!isAdminAuthorized(request)) {
+        if (!(await isAdminAuthorized(request))) {
           return jsonError("Missing or invalid admin token.", 401);
         }
 

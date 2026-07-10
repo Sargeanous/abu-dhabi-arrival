@@ -15,7 +15,7 @@ export const Route = createFileRoute("/api/admin/providers")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        if (!isAdminAuthorized(request)) {
+        if (!(await isAdminAuthorized(request))) {
           return jsonError("Missing or invalid admin token.", 401);
         }
 
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/api/admin/providers")({
         return Response.json({ providers: snapshot.providers });
       },
       POST: async ({ request }) => {
-        if (!isAdminAuthorized(request)) {
+        if (!(await isAdminAuthorized(request))) {
           return jsonError("Missing or invalid admin token.", 401);
         }
 

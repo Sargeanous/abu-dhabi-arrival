@@ -25,7 +25,7 @@ export const Route = createFileRoute("/api/inquiries")({
         }
       },
       GET: async ({ request }) => {
-        if (!isAdminAuthorized(request)) {
+        if (!(await isAdminAuthorized(request))) {
           return jsonError("Missing or invalid admin token.", 401);
         }
 

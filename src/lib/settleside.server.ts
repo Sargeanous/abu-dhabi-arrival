@@ -47,16 +47,7 @@ function slugify(value: string) {
     .slice(0, 80);
 }
 
-export function isAdminAuthorized(request: Request) {
-  const expectedToken = process.env.SETTLESIDE_ADMIN_TOKEN;
-  if (!expectedToken) {
-    const url = new URL(request.url);
-    const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
-    return process.env.NODE_ENV !== "production" || isLocalhost;
-  }
-
-  return request.headers.get("authorization") === `Bearer ${expectedToken}`;
-}
+export { isAdminAuthorized } from "./settleside.auth";
 
 function publicConnectors(providers: ProviderRecord[]): ProviderConnector[] {
   return providers

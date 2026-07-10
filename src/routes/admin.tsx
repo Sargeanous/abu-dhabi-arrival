@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Database, RefreshCw, Save, Sparkles, Upload } from "lucide-react";
+import { Database, LogOut, RefreshCw, Save, Sparkles, Upload } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
+
+import { Toaster } from "@/components/ui/sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -168,8 +170,32 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   );
 }
 
+type AdminSession = {
+  accessToken: string;
+  expiresAt: number;
+  email: string;
+};
+
+const SESSION_STORAGE_KEY = "settleside-admin-session";
+
+function loadStoredSession(): AdminSession | null {
+  try {
+    const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const session = JSON.parse(raw) as AdminSession;
+    if (!session.accessToken || session.expiresAt <= Date.now()) return null;
+    return session;
+  } catch {
+    return null;
+  }
+}
+
 function AdminPage() {
-  const [token, setToken] = useState("");
+  const [session, setSession] = useState<AdminSession | null>(null);
+  const [authState, setAuthState] = useState<"checking" | "login" | "ready">("checking");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
   const [snapshot, setSnapshot] = useState<AdminCatalogSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [providerForm, setProviderForm] = useState<ProviderForm>(EMPTY_PROVIDER);
@@ -178,8 +204,14 @@ function AdminPage() {
   const [csvType, setCsvType] = useState<"product" | "service">("product");
   const [csvProviderKey, setCsvProviderKey] = useState("");
 
+  const token = session?.accessToken ?? "";
   const providerOptions = useMemo(() => snapshot?.providers ?? [], [snapshot]);
   const recentInquiries = snapshot?.inquiries.slice(0, 5) ?? [];
+
+  function clearSession() {
+    setSession(null);
+    window.localStorage.removeItem(SESSION_STORAGE_KEY);
+  }
 
   async function loadSnapshot(currentToken = token) {
     setLoading(true);
@@ -187,8 +219,16 @@ function AdminPage() {
       const response = await fetch("/api/admin/snapshot", {
         headers: authHeaders(currentToken),
       });
+
+      if (response.status === 401) {
+        clearSession();
+        setAuthState("login");
+        return;
+      }
+
       const data = await readJson<AdminCatalogSnapshot>(response);
       setSnapshot(data);
+      setAuthState("ready");
 
       if (!catalogForm.providerKey && data.providers[0]) {
         setCatalogForm((form) => ({ ...form, providerKey: data.providers[0].key }));
@@ -203,15 +243,42 @@ function AdminPage() {
   }
 
   useEffect(() => {
-    const savedToken = window.localStorage.getItem("settleside-admin-token") ?? "";
-    setToken(savedToken);
-    void loadSnapshot(savedToken);
+    const saved = loadStoredSession();
+    if (saved) {
+      setSession(saved);
+    }
+    void loadSnapshot(saved?.accessToken ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function saveToken(value: string) {
-    setToken(value);
-    window.localStorage.setItem("settleside-admin-token", value);
+  async function handleLogin(event: FormEvent) {
+    event.preventDefault();
+    setLoggingIn(true);
+
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      const data = await readJson<{ session: AdminSession }>(response);
+      setSession(data.session);
+      window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(data.session));
+      setLoginPassword("");
+      toast.success("Signed in.");
+      await loadSnapshot(data.session.accessToken);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to sign in.";
+      toast.error(message);
+    } finally {
+      setLoggingIn(false);
+    }
+  }
+
+  function handleLogout() {
+    clearSession();
+    setSnapshot(null);
+    setAuthState("login");
   }
 
   async function saveProvider(event: FormEvent) {
@@ -351,6 +418,57 @@ function AdminPage() {
     }
   }
 
+  if (authState !== "ready") {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background px-5 text-foreground">
+        {authState === "checking" ? (
+          <div className="text-sm text-muted-foreground">Checking access...</div>
+        ) : (
+          <form onSubmit={handleLogin} className="w-full max-w-sm border border-border bg-card p-8">
+            <div className="flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center bg-teal text-primary-foreground">
+                <Database className="h-5 w-5" />
+              </span>
+              <div>
+                <h1 className="font-sans text-lg font-semibold tracking-normal">
+                  SettleSide Admin
+                </h1>
+                <p className="text-sm text-muted-foreground">Sign in to continue</p>
+              </div>
+            </div>
+            <div className="mt-6 grid gap-4">
+              <Field label="Email">
+                <Input
+                  type="email"
+                  required
+                  value={loginEmail}
+                  onChange={(event) => setLoginEmail(event.target.value)}
+                  placeholder="you@company.com"
+                />
+              </Field>
+              <Field label="Password">
+                <Input
+                  type="password"
+                  required
+                  value={loginPassword}
+                  onChange={(event) => setLoginPassword(event.target.value)}
+                />
+              </Field>
+              <Button
+                type="submit"
+                disabled={loggingIn}
+                className="bg-teal text-primary-foreground hover:bg-teal/90"
+              >
+                {loggingIn ? "Signing in..." : "Sign in"}
+              </Button>
+            </div>
+          </form>
+        )}
+        <Toaster richColors position="top-center" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-card">
@@ -368,19 +486,12 @@ function AdminPage() {
               </p>
             </div>
           </div>
-          <div className="flex min-w-[280px] items-end gap-2">
-            <div className="grid flex-1 gap-1">
-              <Label htmlFor="admin-token" className="text-xs">
-                Admin token
-              </Label>
-              <Input
-                id="admin-token"
-                type="password"
-                value={token}
-                onChange={(event) => saveToken(event.target.value)}
-                placeholder="Optional locally"
-              />
-            </div>
+          <div className="flex items-center gap-2">
+            {session && (
+              <span className="hidden text-sm text-muted-foreground sm:inline">
+                {session.email}
+              </span>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -390,6 +501,12 @@ function AdminPage() {
               <RefreshCw className="mr-2 h-4 w-4" />
               Refresh
             </Button>
+            {session && (
+              <Button type="button" variant="ghost" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -873,6 +990,7 @@ function AdminPage() {
           />
         </section>
       </main>
+      <Toaster richColors position="top-center" />
     </div>
   );
 }

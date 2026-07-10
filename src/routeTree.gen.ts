@@ -18,6 +18,7 @@ import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiCatalogRouteImport } from './routes/api/catalog'
 import { Route as ApiAdminSnapshotRouteImport } from './routes/api/admin/snapshot'
 import { Route as ApiAdminProvidersRouteImport } from './routes/api/admin/providers'
+import { Route as ApiAdminLoginRouteImport } from './routes/api/admin/login'
 import { Route as ApiAdminInquiryIntelligenceRouteImport } from './routes/api/admin/inquiry-intelligence'
 import { Route as ApiAdminCatalogMapRouteImport } from './routes/api/admin/catalog-map'
 import { Route as ApiAdminCatalogImportRouteImport } from './routes/api/admin/catalog-import'
@@ -68,6 +69,11 @@ const ApiAdminProvidersRoute = ApiAdminProvidersRouteImport.update({
   path: '/api/admin/providers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminLoginRoute = ApiAdminLoginRouteImport.update({
+  id: '/api/admin/login',
+  path: '/api/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminInquiryIntelligenceRoute =
   ApiAdminInquiryIntelligenceRouteImport.update({
     id: '/api/admin/inquiry-intelligence',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/catalog-import': typeof ApiAdminCatalogImportRoute
   '/api/admin/catalog-map': typeof ApiAdminCatalogMapRoute
   '/api/admin/inquiry-intelligence': typeof ApiAdminInquiryIntelligenceRoute
+  '/api/admin/login': typeof ApiAdminLoginRoute
   '/api/admin/providers': typeof ApiAdminProvidersRoute
   '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
 }
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/api/admin/catalog-import': typeof ApiAdminCatalogImportRoute
   '/api/admin/catalog-map': typeof ApiAdminCatalogMapRoute
   '/api/admin/inquiry-intelligence': typeof ApiAdminInquiryIntelligenceRoute
+  '/api/admin/login': typeof ApiAdminLoginRoute
   '/api/admin/providers': typeof ApiAdminProvidersRoute
   '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
 }
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/api/admin/catalog-import': typeof ApiAdminCatalogImportRoute
   '/api/admin/catalog-map': typeof ApiAdminCatalogMapRoute
   '/api/admin/inquiry-intelligence': typeof ApiAdminInquiryIntelligenceRoute
+  '/api/admin/login': typeof ApiAdminLoginRoute
   '/api/admin/providers': typeof ApiAdminProvidersRoute
   '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
 }
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/api/admin/catalog-import'
     | '/api/admin/catalog-map'
     | '/api/admin/inquiry-intelligence'
+    | '/api/admin/login'
     | '/api/admin/providers'
     | '/api/admin/snapshot'
   fileRoutesByTo: FileRoutesByTo
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/api/admin/catalog-import'
     | '/api/admin/catalog-map'
     | '/api/admin/inquiry-intelligence'
+    | '/api/admin/login'
     | '/api/admin/providers'
     | '/api/admin/snapshot'
   id:
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/api/admin/catalog-import'
     | '/api/admin/catalog-map'
     | '/api/admin/inquiry-intelligence'
+    | '/api/admin/login'
     | '/api/admin/providers'
     | '/api/admin/snapshot'
   fileRoutesById: FileRoutesById
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   ApiAdminCatalogImportRoute: typeof ApiAdminCatalogImportRoute
   ApiAdminCatalogMapRoute: typeof ApiAdminCatalogMapRoute
   ApiAdminInquiryIntelligenceRoute: typeof ApiAdminInquiryIntelligenceRoute
+  ApiAdminLoginRoute: typeof ApiAdminLoginRoute
   ApiAdminProvidersRoute: typeof ApiAdminProvidersRoute
   ApiAdminSnapshotRoute: typeof ApiAdminSnapshotRoute
 }
@@ -265,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminProvidersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/login': {
+      id: '/api/admin/login'
+      path: '/api/admin/login'
+      fullPath: '/api/admin/login'
+      preLoaderRoute: typeof ApiAdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/inquiry-intelligence': {
       id: '/api/admin/inquiry-intelligence'
       path: '/api/admin/inquiry-intelligence'
@@ -308,6 +328,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminCatalogImportRoute: ApiAdminCatalogImportRoute,
   ApiAdminCatalogMapRoute: ApiAdminCatalogMapRoute,
   ApiAdminInquiryIntelligenceRoute: ApiAdminInquiryIntelligenceRoute,
+  ApiAdminLoginRoute: ApiAdminLoginRoute,
   ApiAdminProvidersRoute: ApiAdminProvidersRoute,
   ApiAdminSnapshotRoute: ApiAdminSnapshotRoute,
 }

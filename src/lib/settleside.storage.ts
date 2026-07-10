@@ -72,6 +72,10 @@ async function jsonReadCatalogStore(): Promise<CatalogStore> {
 
 let supabase: SupabaseClient | null = null;
 
+export function getSupabaseAdminClient() {
+  return getSupabase();
+}
+
 function getSupabase() {
   if (!supabase) {
     supabase = createClient(
