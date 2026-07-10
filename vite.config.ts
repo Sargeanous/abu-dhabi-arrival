@@ -15,7 +15,5 @@ export default defineConfig({
   // Self-hosted production build (Fly.io): SETTLESIDE_DEPLOY_TARGET=node makes
   // nitro emit a standalone Node server in .output/. Unset (local dev, Lovable)
   // keeps the default behavior.
-  ...(process.env.SETTLESIDE_DEPLOY_TARGET === "node"
-    ? { nitro: { preset: "node-server" } }
-    : {}),
+  ...(process.env.SETTLESIDE_DEPLOY_TARGET === "node" ? { nitro: { preset: "node-server" } } : {}),
 });
