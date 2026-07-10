@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { storageMode } from "@/lib/settleside.storage";
+
 export const Route = createFileRoute("/api/health")({
   server: {
     handlers: {
@@ -8,7 +10,7 @@ export const Route = createFileRoute("/api/health")({
           ok: true,
           app: "SettleSide",
           backend: "tanstack-start",
-          storage: process.env.SETTLESIDE_DATA_DIR ? "configured-json" : "local-json",
+          storage: storageMode(),
           timestamp: new Date().toISOString(),
         }),
     },

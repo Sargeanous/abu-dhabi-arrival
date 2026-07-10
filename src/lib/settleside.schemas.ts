@@ -308,17 +308,17 @@ export type MarketplaceSnapshot = {
   connectors: ProviderConnector[];
 };
 
+export type InquiryRecord = InquirySubmissionResult & {
+  inquiry: InquiryInput;
+  source: "website";
+  adminSummary?: InquiryAdminSummary;
+  matchInsights?: InquiryMatchInsights;
+};
+
 export type AdminCatalogSnapshot = {
   providers: ProviderRecord[];
   catalogItems: CatalogItemRecord[];
-  inquiries: Array<
-    InquirySubmissionResult & {
-      inquiry: InquiryInput;
-      source: "website";
-      adminSummary?: InquiryAdminSummary;
-      matchInsights?: InquiryMatchInsights;
-    }
-  >;
+  inquiries: InquiryRecord[];
   stats: {
     activeProviders: number;
     activeCatalogItems: number;

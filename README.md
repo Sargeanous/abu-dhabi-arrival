@@ -28,7 +28,12 @@ The dev server prints the local URL, usually `http://localhost:5173`.
 
 Open `/admin` locally for the catalog operations console. Admin routes accept no token in local development; set `SETTLESIDE_ADMIN_TOKEN` for deployed environments and send `Authorization: Bearer <token>`.
 
-Catalog and inquiry data are stored as JSON under `.settleside/` by default. Use `SETTLESIDE_DATA_DIR` to point storage somewhere else.
+## Storage
+
+Storage is dual-backend (`src/lib/settleside.storage.ts`):
+
+- **Supabase (production)**: set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the environment. Create the tables once by running `supabase/schema.sql` in the Supabase SQL editor. Tables are document-style (jsonb) with RLS enabled and no policies, so only the server-side service role can touch them. Seeds are inserted automatically on first read of an empty database.
+- **Local JSON (zero-config default)**: without Supabase credentials, data lives under `.settleside/` (or `SETTLESIDE_DATA_DIR`). `GET /api/health` reports which backend is active in its `storage` field.
 
 ## AI Assistant
 
