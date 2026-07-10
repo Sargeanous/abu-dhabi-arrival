@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z, ZodError } from "zod";
 
 import { adminSignIn } from "@/lib/settleside.auth";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/settleside.ratelimit";
 import { isSupabaseConfigured } from "@/lib/settleside.storage";
 
 const loginSchema = z.object({
@@ -17,6 +18,19 @@ export const Route = createFileRoute("/api/admin/login")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const limit = rateLimit({
+          key: `login:${clientIp(request)}`,
+          max: 5,
+          windowMs: 300_000,
+        });
+
+        if (!limit.allowed) {
+          return tooManyRequests(
+            "Too many sign-in attempts. Try again in a few minutes.",
+            limit.retryAfterSeconds,
+          );
+        }
+
         if (!isSupabaseConfigured()) {
           return jsonError("Admin login requires Supabase to be configured.", 503);
         }

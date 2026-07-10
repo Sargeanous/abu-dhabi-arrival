@@ -2,6 +2,7 @@ import "@tanstack/react-start/server-only";
 
 import { generateMoveIntelligence, mapCatalogCsvColumns } from "./settleside.ai";
 import { rankCatalogItems, toMatchInsight } from "./settleside.matching";
+import { sendInquiryNotification } from "./settleside.notify";
 import {
   CATALOG_CSV_FIELDS,
   catalogCsvImportSchema,
@@ -609,6 +610,12 @@ export async function createInquiry(input: InquiryInput) {
   const records = await readInquiries();
   records.unshift(record);
   await writeInquiries(records);
+
+  try {
+    await sendInquiryNotification(record);
+  } catch (error) {
+    console.error("SettleSide inquiry notification error:", error);
+  }
 
   return {
     id: record.id,

@@ -50,6 +50,11 @@ SettleSide uses Claude for two features (`src/lib/settleside.ai.ts`):
 3. **Admin inquiry summaries** - the same call produces an internal ops digest per inquiry (headline, urgency, revenue opportunities, next action) shown in the `/admin` console. It is stored on the record but never returned to the customer. Inquiries without one (heuristic fallback or pre-feature records) get a "Generate AI summary" button in the console.
 4. **Catalog CSV mapping** - "Map with AI" in the `/admin` CSV import panel. Claude sees only the headers plus a sample of rows and returns a column mapping; deterministic code applies it to the whole file (values are copied verbatim, never AI-rewritten). The normalized CSV lands back in the textarea for review before import.
 
+## Notifications & Rate Limits
+
+- **Inquiry notifications**: set `RESEND_API_KEY` and `SETTLESIDE_NOTIFY_EMAIL` to receive an email per inquiry (with the AI urgency digest when available). `SETTLESIDE_NOTIFY_FROM` overrides the sender once a domain is verified in Resend. Unset = silently skipped; inquiry creation never fails on notification errors.
+- **Rate limits** (per IP, in-memory - suits a single long-running server): AI intake parsing 5/min and 20/hour; inquiry submission 3/min and 10/hour; admin login 5 per 5 minutes. Limits are shared between the `/api` routes and the landing page's server functions.
+
 ## Provider Matching
 
 Inquiry-to-catalog matching is deliberately **not** AI: it is a deterministic scoring model in `src/lib/settleside.matching.ts` (instant, free, explainable). Signals: requested help categories (+40), pet relevance (+30), family relevance (+20), provider integration status (up to +15), provider priority (up to +9), item rating (x2), destination city (+6), and checkout actionability (up to +4). Each inquiry record stores `matchInsights` - per-match scores and human-readable reasons - visible through `/api/admin/snapshot`.

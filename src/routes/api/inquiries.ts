@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ZodError } from "zod";
 
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/settleside.ratelimit";
 import { createInquiry, isAdminAuthorized, listInquiries } from "@/lib/settleside.server";
 
 function jsonError(message: string, status = 400) {
@@ -11,6 +12,17 @@ export const Route = createFileRoute("/api/inquiries")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const ip = clientIp(request);
+        const minute = rateLimit({ key: `inquiry-min:${ip}`, max: 3, windowMs: 60_000 });
+        const hour = rateLimit({ key: `inquiry-hour:${ip}`, max: 10, windowMs: 3_600_000 });
+
+        if (!minute.allowed || !hour.allowed) {
+          return tooManyRequests(
+            "Too many submissions. Please wait a moment and try again.",
+            Math.max(minute.retryAfterSeconds, hour.retryAfterSeconds),
+          );
+        }
+
         try {
           const body = await request.json();
           const result = await createInquiry(body);
