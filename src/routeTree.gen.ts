@@ -9,38 +9,206 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiServicesRouteImport } from './routes/api/services'
+import { Route as ApiIntakeRouteImport } from './routes/api/intake'
+import { Route as ApiInquiriesRouteImport } from './routes/api/inquiries'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiCatalogRouteImport } from './routes/api/catalog'
+import { Route as ApiAdminSnapshotRouteImport } from './routes/api/admin/snapshot'
+import { Route as ApiAdminProvidersRouteImport } from './routes/api/admin/providers'
+import { Route as ApiAdminInquiryIntelligenceRouteImport } from './routes/api/admin/inquiry-intelligence'
+import { Route as ApiAdminCatalogMapRouteImport } from './routes/api/admin/catalog-map'
+import { Route as ApiAdminCatalogImportRouteImport } from './routes/api/admin/catalog-import'
+import { Route as ApiAdminCatalogRouteImport } from './routes/api/admin/catalog'
 
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiServicesRoute = ApiServicesRouteImport.update({
+  id: '/api/services',
+  path: '/api/services',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiIntakeRoute = ApiIntakeRouteImport.update({
+  id: '/api/intake',
+  path: '/api/intake',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiInquiriesRoute = ApiInquiriesRouteImport.update({
+  id: '/api/inquiries',
+  path: '/api/inquiries',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCatalogRoute = ApiCatalogRouteImport.update({
+  id: '/api/catalog',
+  path: '/api/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminSnapshotRoute = ApiAdminSnapshotRouteImport.update({
+  id: '/api/admin/snapshot',
+  path: '/api/admin/snapshot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminProvidersRoute = ApiAdminProvidersRouteImport.update({
+  id: '/api/admin/providers',
+  path: '/api/admin/providers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminInquiryIntelligenceRoute =
+  ApiAdminInquiryIntelligenceRouteImport.update({
+    id: '/api/admin/inquiry-intelligence',
+    path: '/api/admin/inquiry-intelligence',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAdminCatalogMapRoute = ApiAdminCatalogMapRouteImport.update({
+  id: '/api/admin/catalog-map',
+  path: '/api/admin/catalog-map',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminCatalogImportRoute = ApiAdminCatalogImportRouteImport.update({
+  id: '/api/admin/catalog-import',
+  path: '/api/admin/catalog-import',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminCatalogRoute = ApiAdminCatalogRouteImport.update({
+  id: '/api/admin/catalog',
+  path: '/api/admin/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/api/catalog': typeof ApiCatalogRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/inquiries': typeof ApiInquiriesRoute
+  '/api/intake': typeof ApiIntakeRoute
+  '/api/services': typeof ApiServicesRoute
+  '/api/admin/catalog': typeof ApiAdminCatalogRoute
+  '/api/admin/catalog-import': typeof ApiAdminCatalogImportRoute
+  '/api/admin/catalog-map': typeof ApiAdminCatalogMapRoute
+  '/api/admin/inquiry-intelligence': typeof ApiAdminInquiryIntelligenceRoute
+  '/api/admin/providers': typeof ApiAdminProvidersRoute
+  '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/api/catalog': typeof ApiCatalogRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/inquiries': typeof ApiInquiriesRoute
+  '/api/intake': typeof ApiIntakeRoute
+  '/api/services': typeof ApiServicesRoute
+  '/api/admin/catalog': typeof ApiAdminCatalogRoute
+  '/api/admin/catalog-import': typeof ApiAdminCatalogImportRoute
+  '/api/admin/catalog-map': typeof ApiAdminCatalogMapRoute
+  '/api/admin/inquiry-intelligence': typeof ApiAdminInquiryIntelligenceRoute
+  '/api/admin/providers': typeof ApiAdminProvidersRoute
+  '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/api/catalog': typeof ApiCatalogRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/inquiries': typeof ApiInquiriesRoute
+  '/api/intake': typeof ApiIntakeRoute
+  '/api/services': typeof ApiServicesRoute
+  '/api/admin/catalog': typeof ApiAdminCatalogRoute
+  '/api/admin/catalog-import': typeof ApiAdminCatalogImportRoute
+  '/api/admin/catalog-map': typeof ApiAdminCatalogMapRoute
+  '/api/admin/inquiry-intelligence': typeof ApiAdminInquiryIntelligenceRoute
+  '/api/admin/providers': typeof ApiAdminProvidersRoute
+  '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/api/catalog'
+    | '/api/health'
+    | '/api/inquiries'
+    | '/api/intake'
+    | '/api/services'
+    | '/api/admin/catalog'
+    | '/api/admin/catalog-import'
+    | '/api/admin/catalog-map'
+    | '/api/admin/inquiry-intelligence'
+    | '/api/admin/providers'
+    | '/api/admin/snapshot'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin'
+    | '/api/catalog'
+    | '/api/health'
+    | '/api/inquiries'
+    | '/api/intake'
+    | '/api/services'
+    | '/api/admin/catalog'
+    | '/api/admin/catalog-import'
+    | '/api/admin/catalog-map'
+    | '/api/admin/inquiry-intelligence'
+    | '/api/admin/providers'
+    | '/api/admin/snapshot'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/api/catalog'
+    | '/api/health'
+    | '/api/inquiries'
+    | '/api/intake'
+    | '/api/services'
+    | '/api/admin/catalog'
+    | '/api/admin/catalog-import'
+    | '/api/admin/catalog-map'
+    | '/api/admin/inquiry-intelligence'
+    | '/api/admin/providers'
+    | '/api/admin/snapshot'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  ApiCatalogRoute: typeof ApiCatalogRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiInquiriesRoute: typeof ApiInquiriesRoute
+  ApiIntakeRoute: typeof ApiIntakeRoute
+  ApiServicesRoute: typeof ApiServicesRoute
+  ApiAdminCatalogRoute: typeof ApiAdminCatalogRoute
+  ApiAdminCatalogImportRoute: typeof ApiAdminCatalogImportRoute
+  ApiAdminCatalogMapRoute: typeof ApiAdminCatalogMapRoute
+  ApiAdminInquiryIntelligenceRoute: typeof ApiAdminInquiryIntelligenceRoute
+  ApiAdminProvidersRoute: typeof ApiAdminProvidersRoute
+  ApiAdminSnapshotRoute: typeof ApiAdminSnapshotRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,12 +216,111 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/services': {
+      id: '/api/services'
+      path: '/api/services'
+      fullPath: '/api/services'
+      preLoaderRoute: typeof ApiServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/intake': {
+      id: '/api/intake'
+      path: '/api/intake'
+      fullPath: '/api/intake'
+      preLoaderRoute: typeof ApiIntakeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/inquiries': {
+      id: '/api/inquiries'
+      path: '/api/inquiries'
+      fullPath: '/api/inquiries'
+      preLoaderRoute: typeof ApiInquiriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/catalog': {
+      id: '/api/catalog'
+      path: '/api/catalog'
+      fullPath: '/api/catalog'
+      preLoaderRoute: typeof ApiCatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/snapshot': {
+      id: '/api/admin/snapshot'
+      path: '/api/admin/snapshot'
+      fullPath: '/api/admin/snapshot'
+      preLoaderRoute: typeof ApiAdminSnapshotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/providers': {
+      id: '/api/admin/providers'
+      path: '/api/admin/providers'
+      fullPath: '/api/admin/providers'
+      preLoaderRoute: typeof ApiAdminProvidersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/inquiry-intelligence': {
+      id: '/api/admin/inquiry-intelligence'
+      path: '/api/admin/inquiry-intelligence'
+      fullPath: '/api/admin/inquiry-intelligence'
+      preLoaderRoute: typeof ApiAdminInquiryIntelligenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/catalog-map': {
+      id: '/api/admin/catalog-map'
+      path: '/api/admin/catalog-map'
+      fullPath: '/api/admin/catalog-map'
+      preLoaderRoute: typeof ApiAdminCatalogMapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/catalog-import': {
+      id: '/api/admin/catalog-import'
+      path: '/api/admin/catalog-import'
+      fullPath: '/api/admin/catalog-import'
+      preLoaderRoute: typeof ApiAdminCatalogImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/catalog': {
+      id: '/api/admin/catalog'
+      path: '/api/admin/catalog'
+      fullPath: '/api/admin/catalog'
+      preLoaderRoute: typeof ApiAdminCatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  ApiCatalogRoute: ApiCatalogRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiInquiriesRoute: ApiInquiriesRoute,
+  ApiIntakeRoute: ApiIntakeRoute,
+  ApiServicesRoute: ApiServicesRoute,
+  ApiAdminCatalogRoute: ApiAdminCatalogRoute,
+  ApiAdminCatalogImportRoute: ApiAdminCatalogImportRoute,
+  ApiAdminCatalogMapRoute: ApiAdminCatalogMapRoute,
+  ApiAdminInquiryIntelligenceRoute: ApiAdminInquiryIntelligenceRoute,
+  ApiAdminProvidersRoute: ApiAdminProvidersRoute,
+  ApiAdminSnapshotRoute: ApiAdminSnapshotRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

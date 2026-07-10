@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -51,8 +52,21 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Toaster } from "@/components/ui/sonner";
+import {
+  loadMarketplaceSnapshot,
+  parseMoveIntakeDraft,
+  submitInquiry,
+} from "@/lib/settleside.functions";
+import { HELP_OPTIONS } from "@/lib/settleside.schemas";
+import type {
+  InquirySubmissionResult,
+  MarketplaceProduct,
+  MarketplaceService,
+  MoveIntakeDraft,
+} from "@/lib/settleside.schemas";
 
 export const Route = createFileRoute("/")({
+  loader: () => loadMarketplaceSnapshot({ data: { destination: "Abu Dhabi" } }),
   head: () => ({
     meta: [
       { title: "SettleSide: Your end-to-end relocation assistant" },
@@ -61,7 +75,10 @@ export const Route = createFileRoute("/")({
         content:
           "SettleSide is the all-in-one assistant for moving to a new city: plan your move, shop home essentials, book trusted services, and add pet relocation if you need it, all in one place.",
       },
-      { property: "og:title", content: "SettleSide: Your end-to-end relocation assistant" },
+      {
+        property: "og:title",
+        content: "SettleSide: Your end-to-end relocation assistant",
+      },
       {
         property: "og:description",
         content:
@@ -105,13 +122,7 @@ function SectionHeader({
   );
 }
 
-function Card({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div
       className={
@@ -179,7 +190,10 @@ function Nav() {
           ))}
         </nav>
         <div className="hidden md:block">
-          <Button asChild className="rounded-full bg-teal px-5 text-primary-foreground hover:bg-teal/90">
+          <Button
+            asChild
+            className="rounded-full bg-teal px-5 text-primary-foreground hover:bg-teal/90"
+          >
             <a href="#inquiry">Start my move</a>
           </Button>
         </div>
@@ -239,9 +253,9 @@ function Hero() {
             <span className="text-teal"> in one place.</span>
           </h1>
           <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
-            SettleSide plans your relocation, then lets you shop home essentials and book
-            trusted services directly, pulling live options from leading retailers and
-            providers. Add pet relocation only if you need it.
+            SettleSide plans your relocation, then lets you shop home essentials and book trusted
+            services directly, pulling live options from leading retailers and providers. Add pet
+            relocation only if you need it.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button
@@ -296,7 +310,9 @@ function Hero() {
                     >
                       {done ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
                     </span>
-                    <span className={done ? "text-muted-foreground line-through" : "text-foreground"}>
+                    <span
+                      className={done ? "text-muted-foreground line-through" : "text-foreground"}
+                    >
                       {label as string}
                     </span>
                   </li>
@@ -329,7 +345,9 @@ function Hero() {
                 </IconBubble>
                 <h4 className="mt-3 font-serif text-base text-foreground">Service slots</h4>
                 <p className="mt-1 text-xs text-muted-foreground">3 movers available</p>
-                <div className="mt-3 text-xs font-medium text-[oklch(0.42_0.05_155)]">Tue · Wed · Sat</div>
+                <div className="mt-3 text-xs font-medium text-[oklch(0.42_0.05_155)]">
+                  Tue · Wed · Sat
+                </div>
               </Card>
             </div>
 
@@ -356,7 +374,9 @@ function Hero() {
                       >
                         {i + 1}
                       </span>
-                      <span className="mt-1 text-[10px] font-medium text-foreground">{s.label}</span>
+                      <span className="mt-1 text-[10px] font-medium text-foreground">
+                        {s.label}
+                      </span>
                       <span className="text-[9px] text-muted-foreground">{s.d}</span>
                     </div>
                     {i < 3 && (
@@ -375,11 +395,7 @@ function Hero() {
 
 /* ---------- Logos / integrations strip ---------- */
 
-const PARTNERS = [
-  "IKEA", "Amazon", "Wayfair", "Vodafone", "Atlas Movers", "Helpling", "Made.com", "Allianz",
-];
-
-function Partners() {
+function Partners({ partners }: { partners: string[] }) {
   return (
     <section className="border-y border-border bg-card/50">
       <div className="mx-auto max-w-6xl section-px py-8">
@@ -387,8 +403,10 @@ function Partners() {
           Live inventory & availability from leading retailers and providers
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm font-medium text-foreground/60">
-          {PARTNERS.map((p) => (
-            <span key={p} className="font-serif text-lg tracking-tight">{p}</span>
+          {partners.map((p) => (
+            <span key={p} className="font-serif text-lg tracking-tight">
+              {p}
+            </span>
           ))}
         </div>
       </div>
@@ -434,7 +452,9 @@ function HowItWorks() {
           {STEPS.map((s, i) => (
             <Card key={s.title} className="h-full">
               <div className="flex items-center justify-between">
-                <IconBubble><s.icon className="h-5 w-5" /></IconBubble>
+                <IconBubble>
+                  <s.icon className="h-5 w-5" />
+                </IconBubble>
                 <span className="font-serif text-2xl text-terracotta">0{i + 1}</span>
               </div>
               <h3 className="mt-5 font-serif text-xl text-foreground">{s.title}</h3>
@@ -449,24 +469,17 @@ function HowItWorks() {
 
 /* ---------- Catalog: Home essentials ---------- */
 
-type Product = {
-  category: string;
-  name: string;
-  retailer: string;
-  price: string;
-  rating: number;
-  swatch: string;
-  icon: React.ComponentType<{ className?: string }>;
+const PRODUCT_ICONS: Record<
+  MarketplaceProduct["icon"],
+  React.ComponentType<{ className?: string }>
+> = {
+  sofa: Sofa,
+  boxes: Boxes,
+  wifi: Wifi,
+  shopping: ShoppingBag,
 };
 
-const PRODUCTS: Product[] = [
-  { category: "Mattress", name: "Hybrid Memory Foam Queen", retailer: "Emma", price: "€599", rating: 4.7, swatch: "bg-sand-deep", icon: Sofa },
-  { category: "Sofa", name: "Linen 3-Seater · Sand", retailer: "Made.com", price: "€849", rating: 4.5, swatch: "bg-terracotta-soft", icon: Sofa },
-  { category: "Kitchen starter", name: "30-piece essentials box", retailer: "IKEA", price: "€129", rating: 4.6, swatch: "bg-[oklch(0.93_0.03_150)]", icon: Boxes },
-  { category: "Internet", name: "1 Gbps fiber · no contract", retailer: "Vodafone", price: "€39/mo", rating: 4.3, swatch: "bg-[oklch(0.93_0.02_240)]", icon: Wifi },
-];
-
-function CatalogTeaser() {
+function CatalogTeaser({ products }: { products: MarketplaceProduct[] }) {
   return (
     <section id="catalog" className="scroll-mt-20 bg-sand">
       <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
@@ -478,38 +491,47 @@ function CatalogTeaser() {
 
         <div className="mt-10 flex items-center gap-2 rounded-full bg-card px-4 py-2.5 shadow-soft hairline">
           <Search className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Search "queen mattress, delivery this week"…</span>
+          <span className="text-sm text-muted-foreground">
+            Search "queen mattress, delivery this week"…
+          </span>
           <span className="ml-auto rounded-full bg-teal px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary-foreground">
             Live
           </span>
         </div>
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {PRODUCTS.map((p) => (
-            <Card key={p.name} className="flex flex-col p-5">
-              <div className={`relative h-32 overflow-hidden rounded-xl ${p.swatch}`}>
-                <div className="absolute inset-0 grid place-items-center">
-                  <p.icon className="h-12 w-12 text-foreground/30" />
+          {products.map((p) => {
+            const ProductIcon = PRODUCT_ICONS[p.icon];
+
+            return (
+              <Card key={p.name} className="flex flex-col p-5">
+                <div className={`relative h-32 overflow-hidden rounded-xl ${p.swatch}`}>
+                  <div className="absolute inset-0 grid place-items-center">
+                    <ProductIcon className="h-12 w-12 text-foreground/30" />
+                  </div>
+                  <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground">
+                    {p.category}
+                  </span>
                 </div>
-                <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground">
-                  {p.category}
-                </span>
-              </div>
-              <h3 className="mt-4 font-serif text-base text-foreground">{p.name}</h3>
-              <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Star className="h-3 w-3 fill-terracotta text-terracotta" />
-                <span>{p.rating}</span>
-                <span>·</span>
-                <span>{p.retailer}</span>
-              </div>
-              <div className="mt-4 flex items-center justify-between">
-                <span className="font-serif text-lg text-foreground">{p.price}</span>
-                <Button size="sm" className="rounded-full bg-foreground px-4 text-background hover:bg-foreground/90">
-                  Add
-                </Button>
-              </div>
-            </Card>
-          ))}
+                <h3 className="mt-4 font-serif text-base text-foreground">{p.name}</h3>
+                <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Star className="h-3 w-3 fill-terracotta text-terracotta" />
+                  <span>{p.rating}</span>
+                  <span>·</span>
+                  <span>{p.retailer}</span>
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="font-serif text-lg text-foreground">{p.price}</span>
+                  <Button
+                    size="sm"
+                    className="rounded-full bg-foreground px-4 text-background hover:bg-foreground/90"
+                  >
+                    Add
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
@@ -522,23 +544,20 @@ function CatalogTeaser() {
 
 /* ---------- Services marketplace ---------- */
 
-type Service = {
-  icon: React.ComponentType<{ className?: string }>;
-  category: string;
-  body: string;
-  providers: string;
+const SERVICE_ICONS: Record<
+  MarketplaceService["icon"],
+  React.ComponentType<{ className?: string }>
+> = {
+  truck: Truck,
+  sparkles: Sparkles,
+  wifi: Wifi,
+  wrench: Wrench,
+  shield: ShieldCheck,
+  building: Building2,
+  paw: PawPrint,
 };
 
-const SERVICES: Service[] = [
-  { icon: Truck, category: "Movers & shipping", body: "Compare quotes from vetted international and local movers.", providers: "12 providers" },
-  { icon: Sparkles, category: "Cleaning", body: "Move-in & move-out deep cleans booked in a few taps.", providers: "8 providers" },
-  { icon: Wifi, category: "Internet & utilities", body: "Set up fiber, mobile, power, and water on day one.", providers: "Local telcos" },
-  { icon: Wrench, category: "Handyman & install", body: "Curtains, TV mount, assembly, booked to your move-in date.", providers: "20+ pros" },
-  { icon: ShieldCheck, category: "Insurance", body: "Renters and contents cover from licensed brokers.", providers: "5 brokers" },
-  { icon: Building2, category: "Storage", body: "Short-term storage for the awkward gap between homes.", providers: "Local & national" },
-];
-
-function ServicesMarketplace() {
+function ServicesMarketplace({ services }: { services: MarketplaceService[] }) {
   return (
     <section id="services" className="scroll-mt-20">
       <div className="mx-auto max-w-6xl section-px py-20 md:py-28">
@@ -548,19 +567,27 @@ function ServicesMarketplace() {
           body="From international movers to a same-day handyman, we surface live availability from trusted providers in your city."
         />
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {SERVICES.map((s) => (
-            <Card key={s.category} className="flex h-full flex-col">
-              <IconBubble><s.icon className="h-5 w-5" /></IconBubble>
-              <h3 className="mt-5 font-serif text-xl text-foreground">{s.category}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-              <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
-                <span className="text-xs font-medium text-muted-foreground">{s.providers}</span>
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-teal">
-                  Browse <ArrowRight className="h-3 w-3" />
-                </span>
-              </div>
-            </Card>
-          ))}
+          {services.map((s) => {
+            const ServiceIcon = SERVICE_ICONS[s.icon];
+
+            return (
+              <Card key={s.category} className="flex h-full flex-col">
+                <IconBubble>
+                  <ServiceIcon className="h-5 w-5" />
+                </IconBubble>
+                <h3 className="mt-5 font-serif text-xl text-foreground">{s.category}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+                <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {s.providers} · {s.leadTime}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-teal">
+                    Browse <ArrowRight className="h-3 w-3" />
+                  </span>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -606,7 +633,9 @@ function AddOns() {
           {ADDONS.map((a) => (
             <Card key={a.title} className="flex h-full flex-col">
               <div className="flex items-center justify-between">
-                <IconBubble tone={a.tone}><a.icon className="h-5 w-5" /></IconBubble>
+                <IconBubble tone={a.tone}>
+                  <a.icon className="h-5 w-5" />
+                </IconBubble>
                 <span className="rounded-full bg-card px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground hairline">
                   {a.tag}
                 </span>
@@ -687,10 +716,22 @@ function WhyUs() {
 /* ---------- Who this is for ---------- */
 
 const AUDIENCE = [
-  { icon: Compass, title: "You're moving cities or countries and don't know where to start" },
-  { icon: Home, title: "You've signed a lease and need to furnish & set up fast" },
-  { icon: Zap, title: "You want fewer apps, fewer calls, and faster decisions" },
-  { icon: MessageSquare, title: "You'd rather book everything once than chase ten providers" },
+  {
+    icon: Compass,
+    title: "You're moving cities or countries and don't know where to start",
+  },
+  {
+    icon: Home,
+    title: "You've signed a lease and need to furnish & set up fast",
+  },
+  {
+    icon: Zap,
+    title: "You want fewer apps, fewer calls, and faster decisions",
+  },
+  {
+    icon: MessageSquare,
+    title: "You'd rather book everything once than chase ten providers",
+  },
 ];
 
 function WhoFor() {
@@ -701,7 +742,9 @@ function WhoFor() {
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {AUDIENCE.map((a) => (
             <Card key={a.title} className="p-6">
-              <IconBubble tone="navy"><a.icon className="h-5 w-5" /></IconBubble>
+              <IconBubble tone="navy">
+                <a.icon className="h-5 w-5" />
+              </IconBubble>
               <p className="mt-5 font-serif text-lg leading-snug text-foreground">{a.title}</p>
             </Card>
           ))}
@@ -773,19 +816,6 @@ function FAQ() {
 
 /* ---------- Inquiry form ---------- */
 
-const HELP_OPTIONS = [
-  "Movers & shipping",
-  "Furniture & mattress",
-  "Kitchen & essentials",
-  "Cleaning",
-  "Internet & utilities",
-  "Handyman / installation",
-  "Insurance",
-  "Storage",
-  "Pet relocation (optional)",
-  "Family & school search (optional)",
-];
-
 type FormState = {
   name: string;
   email: string;
@@ -814,12 +844,93 @@ const EMPTY_FORM: FormState = {
   message: "",
 };
 
+function AiIntakeAssist({ onDraft }: { onDraft: (draft: MoveIntakeDraft) => void }) {
+  const parseIntakeFn = useServerFn(parseMoveIntakeDraft);
+  const [description, setDescription] = useState("");
+  const [parsing, setParsing] = useState(false);
+
+  async function handleParse() {
+    setParsing(true);
+
+    try {
+      const result = await parseIntakeFn({ data: { description } });
+
+      if (result.ok) {
+        onDraft(result.draft);
+        toast.success("Form pre-filled from your description. Review it and submit.");
+      } else if (result.reason === "not-configured") {
+        toast.info(
+          "The AI assistant isn't set up on this server yet. Fill the form below instead.",
+        );
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to read your move description.";
+      toast.error(message);
+    } finally {
+      setParsing(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-teal/30 bg-teal/5 p-5 sm:p-6">
+      <div className="flex items-center gap-2 text-sm font-medium text-teal">
+        <Sparkles className="h-4 w-4" />
+        Describe your move and we'll fill the form for you
+      </div>
+      <Textarea
+        rows={3}
+        className="mt-3 bg-background"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder='e.g. "We are a family of four moving from London to Abu Dhabi in early September with our dog. We need movers, beds and a sofa, and internet working on day one."'
+      />
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <Button
+          type="button"
+          onClick={handleParse}
+          disabled={parsing || description.trim().length < 20}
+          className="rounded-full bg-teal px-5 text-primary-foreground hover:bg-teal/90"
+        >
+          {parsing ? "Reading your move..." : "Prefill with AI"}
+          <Sparkles className="ml-1 h-4 w-4" />
+        </Button>
+        <span className="text-xs text-muted-foreground">
+          Optional. You can also fill the form manually below.
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function InquiryForm() {
+  const submitInquiryFn = useServerFn(submitInquiry);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submission, setSubmission] = useState<InquirySubmissionResult | null>(null);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  function applyDraft(draft: MoveIntakeDraft) {
+    setForm((f) => ({
+      ...f,
+      name: draft.name || f.name,
+      email: draft.email || f.email,
+      whatsapp: draft.whatsapp || f.whatsapp,
+      origin: draft.origin || f.origin,
+      destination: draft.destination || f.destination,
+      moveDate: draft.moveDate || f.moveDate,
+      household: draft.household || f.household,
+      status: draft.status || f.status,
+      pet: draft.pet !== "no" ? draft.pet : f.pet,
+      help: draft.help.length > 0 ? [...draft.help] : f.help,
+      message: draft.message || f.message,
+    }));
   }
 
   function toggleHelp(label: string) {
@@ -829,11 +940,22 @@ function InquiryForm() {
     }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    console.log("[SettleSide inquiry]", form);
-    setSubmitted(true);
-    toast.success("Your move request has been received.");
+    setSubmitting(true);
+
+    try {
+      const result = await submitInquiryFn({ data: form });
+      setSubmission(result);
+      setSubmitted(true);
+      toast.success(`Your move request ${result.id} has been received.`);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to submit your move request.";
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -848,12 +970,32 @@ function InquiryForm() {
         <p className="mt-3 text-muted-foreground">
           We'll build your move plan and reach out shortly with your tailored catalog.
         </p>
+        {submission && (
+          <div className="mt-6 rounded-xl bg-sand p-4 text-left">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Request ID
+            </div>
+            <div className="mt-1 font-mono text-sm text-foreground">{submission.id}</div>
+            <div className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              First plan steps
+            </div>
+            <ul className="mt-2 space-y-2 text-sm text-foreground">
+              {submission.plan.tasks.slice(0, 3).map((task) => (
+                <li key={`${task.title}-${task.timing}`} className="flex gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-teal" />
+                  <span>{task.title}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <Button
           variant="outline"
           className="mt-8 rounded-full"
           onClick={() => {
             setForm(EMPTY_FORM);
             setSubmitted(false);
+            setSubmission(null);
           }}
         >
           Submit another request
@@ -864,6 +1006,14 @@ function InquiryForm() {
 
   return (
     <Card className="p-6 sm:p-10">
+      <AiIntakeAssist onDraft={applyDraft} />
+      <div className="my-6 flex items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Your move details
+        </span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
       <form onSubmit={handleSubmit} className="grid gap-5">
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Name" required>
@@ -989,9 +1139,10 @@ function InquiryForm() {
         <Button
           type="submit"
           size="lg"
+          disabled={submitting}
           className="mt-2 w-full rounded-full bg-teal text-primary-foreground hover:bg-teal/90 sm:w-auto sm:self-start sm:px-8"
         >
-          Build my move plan
+          {submitting ? "Building plan..." : "Build my move plan"}
           <ArrowRight className="ml-1 h-4 w-4" />
         </Button>
       </form>
@@ -1052,7 +1203,8 @@ function Footer() {
               <span className="font-serif text-xl font-semibold text-foreground">SettleSide</span>
             </div>
             <p className="mt-4 max-w-sm text-sm text-muted-foreground">
-              The end-to-end relocation assistant. Plan, shop, and book your entire move in one place.
+              The end-to-end relocation assistant. Plan, shop, and book your entire move in one
+              place.
             </p>
             <a
               href="mailto:hello@settleside.com"
@@ -1062,20 +1214,28 @@ function Footer() {
             </a>
           </div>
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-foreground">Explore</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-foreground">
+              Explore
+            </div>
             <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
               {NAV_LINKS.map((l) => (
                 <li key={l.href}>
-                  <a href={l.href} className="hover:text-foreground">{l.label}</a>
+                  <a href={l.href} className="hover:text-foreground">
+                    {l.label}
+                  </a>
                 </li>
               ))}
               <li>
-                <a href="#inquiry" className="hover:text-foreground">Contact</a>
+                <a href="#inquiry" className="hover:text-foreground">
+                  Contact
+                </a>
               </li>
             </ul>
           </div>
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-foreground">Modules</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-foreground">
+              Modules
+            </div>
             <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
               <li>Move planning</li>
               <li>Home essentials catalog</li>
@@ -1085,16 +1245,22 @@ function Footer() {
           </div>
         </div>
         <div className="mt-12 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5"><Globe2 className="h-3.5 w-3.5 text-teal" /> Any city</span>
-          <span className="inline-flex items-center gap-1.5"><Plug className="h-3.5 w-3.5 text-teal" /> Live retailer & provider APIs</span>
-          <span className="inline-flex items-center gap-1.5"><PawPrint className="h-3.5 w-3.5 text-teal" /> Pet add-on</span>
+          <span className="inline-flex items-center gap-1.5">
+            <Globe2 className="h-3.5 w-3.5 text-teal" /> Any city
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Plug className="h-3.5 w-3.5 text-teal" /> Live retailer & provider APIs
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <PawPrint className="h-3.5 w-3.5 text-teal" /> Pet add-on
+          </span>
         </div>
         <div className="mt-8 border-t border-border pt-6">
           <p className="text-xs leading-relaxed text-muted-foreground">
             SettleSide is a relocation assistant connecting users with retailers and service
-            providers via official APIs and partnerships. We are not a moving company, real
-            estate broker, telco, veterinary clinic, airline, customs broker, or legal advisor.
-            Final terms and requirements are set by each provider.
+            providers via official APIs and partnerships. We are not a moving company, real estate
+            broker, telco, veterinary clinic, airline, customs broker, or legal advisor. Final terms
+            and requirements are set by each provider.
           </p>
           <p className="mt-4 text-xs text-muted-foreground">
             © {new Date().getFullYear()} SettleSide. All rights reserved.
@@ -1108,15 +1274,17 @@ function Footer() {
 /* ---------- Page ---------- */
 
 function LandingPage() {
+  const marketplace = Route.useLoaderData();
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Nav />
       <main>
         <Hero />
-        <Partners />
+        <Partners partners={marketplace.partners} />
         <HowItWorks />
-        <CatalogTeaser />
-        <ServicesMarketplace />
+        <CatalogTeaser products={marketplace.products} />
+        <ServicesMarketplace services={marketplace.services} />
         <AddOns />
         <WhyUs />
         <WhoFor />

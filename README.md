@@ -1,0 +1,56 @@
+# SettleSide
+
+SettleSide is a TanStack Start app for an end-to-end relocation assistant. The current app includes the Lovable-built frontend plus an MVP backend for inquiries, provider onboarding, catalog operations, CSV imports, service-provider data, and health checks.
+
+## Local Development
+
+```bash
+npm install --no-package-lock
+npm run dev
+```
+
+The dev server prints the local URL, usually `http://localhost:5173`.
+
+## Backend Endpoints
+
+- `GET /api/health` - app and backend health check.
+- `GET /api/catalog?destination=Abu%20Dhabi` - product/catalog options for the destination.
+- `GET /api/services?destination=Abu%20Dhabi` - service marketplace options and connector roadmap.
+- `POST /api/inquiries` - public lead capture endpoint used by the inquiry form.
+- `POST /api/intake` - AI move intake parser. Body: `{ "description": "free text about the move" }`. Returns a structured inquiry-form draft. Responds `503` when no AI credentials are configured.
+- `GET /api/inquiries` - admin-only inquiry list. Set `SETTLESIDE_ADMIN_TOKEN` and send `Authorization: Bearer <token>`.
+- `GET /api/admin/snapshot` - provider, catalog, inquiry, and ops statistics.
+- `POST /api/admin/inquiry-intelligence` - regenerate the AI plan and admin summary for one inquiry. Body: `{ "id": "ss-..." }`.
+- `POST /api/admin/providers` - create or update a provider.
+- `POST /api/admin/catalog` - create or update a product or service item.
+- `POST /api/admin/catalog-import` - import catalog rows from CSV text.
+- `POST /api/admin/catalog-map` - AI-map a provider CSV with arbitrary column names onto the SettleSide catalog format. Body: `{ "csv": "..." }`. Returns the normalized CSV for review before importing.
+
+Open `/admin` locally for the catalog operations console. Admin routes accept no token in local development; set `SETTLESIDE_ADMIN_TOKEN` for deployed environments and send `Authorization: Bearer <token>`.
+
+Catalog and inquiry data are stored as JSON under `.settleside/` by default. Use `SETTLESIDE_DATA_DIR` to point storage somewhere else.
+
+## AI Assistant
+
+SettleSide uses Claude for two features (`src/lib/settleside.ai.ts`):
+
+1. **Move intake parsing** - the "Describe your move" box on the landing page parses free text into a pre-filled inquiry form.
+2. **Move plan generation** - every submitted inquiry gets a personalized, chronologically ordered task plan grounded in the marketplace's services and lead times. When AI is unavailable, inquiries fall back to the rule-based plan and are marked `planSource: "heuristic"` instead of `"ai"`.
+3. **Admin inquiry summaries** - the same call produces an internal ops digest per inquiry (headline, urgency, revenue opportunities, next action) shown in the `/admin` console. It is stored on the record but never returned to the customer. Inquiries without one (heuristic fallback or pre-feature records) get a "Generate AI summary" button in the console.
+4. **Catalog CSV mapping** - "Map with AI" in the `/admin` CSV import panel. Claude sees only the headers plus a sample of rows and returns a column mapping; deterministic code applies it to the whole file (values are copied verbatim, never AI-rewritten). The normalized CSV lands back in the textarea for review before import.
+
+## Provider Matching
+
+Inquiry-to-catalog matching is deliberately **not** AI: it is a deterministic scoring model in `src/lib/settleside.matching.ts` (instant, free, explainable). Signals: requested help categories (+40), pet relevance (+30), family relevance (+20), provider integration status (up to +15), provider priority (up to +9), item rating (x2), destination city (+6), and checkout actionability (up to +4). Each inquiry record stores `matchInsights` - per-match scores and human-readable reasons - visible through `/api/admin/snapshot`.
+
+- Set `ANTHROPIC_API_KEY` before starting the server to enable it. Without a key the feature degrades gracefully: the endpoint returns `503 not-configured` and the manual form keeps working.
+- `SETTLESIDE_AI_MODEL` overrides the model (default `claude-opus-4-8`).
+
+## Provider Integration Roadmap
+
+The backend currently uses provider-shaped seed data so the frontend can run end to end. Next production steps are:
+
+1. Replace JSON persistence with Supabase/Postgres.
+2. Confirm affiliate/API access for retailers, telcos, movers, cleaning, handyman, insurance, and storage partners.
+3. Normalize provider capabilities into catalog, quote, booking, payment, and status-tracking adapters.
+4. Add authentication for customer dashboards and provider/admin workflows.

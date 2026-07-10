@@ -78,13 +78,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "SettleSide — Move-in setup & pet relocation readiness for Abu Dhabi expats" },
-      { name: "description", content: "SettleSide helps busy expats coordinate apartment move-in setup and pet relocation readiness in Abu Dhabi. Calm, practical, on-the-ground support." },
+      {
+        name: "description",
+        content:
+          "SettleSide helps busy expats coordinate apartment move-in setup and pet relocation readiness in Abu Dhabi. Calm, practical, on-the-ground support.",
+      },
       { property: "og:title", content: "SettleSide — Settle into Abu Dhabi with less stress" },
-      { property: "og:description", content: "Move-in setup and pet relocation readiness for Abu Dhabi expats." },
+      {
+        property: "og:description",
+        content: "Move-in setup and pet relocation readiness for Abu Dhabi expats.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
