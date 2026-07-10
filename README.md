@@ -62,6 +62,18 @@ Inquiry-to-catalog matching is deliberately **not** AI: it is a deterministic sc
 - Set `ANTHROPIC_API_KEY` before starting the server to enable it. Without a key the feature degrades gracefully: the endpoint returns `503 not-configured` and the manual form keeps working.
 - `SETTLESIDE_AI_MODEL` overrides the model (default `claude-opus-4-8`).
 
+## Deployment (Fly.io)
+
+The production build is a standalone Node server: `SETTLESIDE_DEPLOY_TARGET=node npm run build` emits `.output/server/index.mjs` (the Dockerfile does this). Deploy with:
+
+```bash
+flyctl launch --no-deploy   # first time only; confirms app name and region from fly.toml
+flyctl secrets set ANTHROPIC_API_KEY=... SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... RESEND_API_KEY=... SETTLESIDE_NOTIFY_EMAIL=...
+flyctl deploy
+```
+
+Secrets are never baked into the image (`.env` is dockerignored). Set `primary_region` in `fly.toml` to the region closest to the Supabase project.
+
 ## Provider Integration Roadmap
 
 The backend currently uses provider-shaped seed data so the frontend can run end to end. Next production steps are:

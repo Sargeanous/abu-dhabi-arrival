@@ -1,0 +1,17 @@
+# Secrets must never enter the image - they are set as Fly secrets.
+.env
+.env.*
+
+node_modules
+dist
+.output
+.settleside
+.git
+.tanstack
+.lovable
+.nitro
+.vinxi
+*.log
+.wrangler
+.vscode
+.idea
