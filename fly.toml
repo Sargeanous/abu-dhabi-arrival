@@ -2,7 +2,7 @@
 # Region: pick the one closest to your Supabase project (shown on its
 # dashboard) - "fra" for eu-central, "sin" for Singapore, "bom" for Mumbai.
 app = "settleside"
-primary_region = "fra"
+primary_region = "sin"
 
 [build]
 

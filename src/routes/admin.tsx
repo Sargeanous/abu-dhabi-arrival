@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Database, LogOut, RefreshCw, Save, Sparkles, Upload } from "lucide-react";
+import { Database, LogOut, RefreshCw, Save, Sparkles, Store, Trash2, Upload } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,7 +26,11 @@ import type {
   InquiryAdminSummary,
   ProviderRecord,
   ProviderUpsert,
+  SupplierDraft,
 } from "@/lib/settleside.schemas";
+
+type ProviderDraft = SupplierDraft["provider"];
+type ItemDraft = SupplierDraft["items"][number];
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -203,6 +208,11 @@ function AdminPage() {
   const [csvText, setCsvText] = useState(SAMPLE_CSV);
   const [csvType, setCsvType] = useState<"product" | "service">("product");
   const [csvProviderKey, setCsvProviderKey] = useState("");
+  const [supplierText, setSupplierText] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [supplierDraft, setSupplierDraft] = useState<SupplierDraft | null>(null);
+  const [supplierPublish, setSupplierPublish] = useState(true);
+  const [savingSupplier, setSavingSupplier] = useState(false);
 
   const token = session?.accessToken ?? "";
   const providerOptions = useMemo(() => snapshot?.providers ?? [], [snapshot]);
@@ -279,6 +289,108 @@ function AdminPage() {
     clearSession();
     setSnapshot(null);
     setAuthState("login");
+  }
+
+  async function draftSupplier() {
+    setDrafting(true);
+
+    try {
+      const response = await fetch("/api/admin/supplier-draft", {
+        method: "POST",
+        headers: { ...authHeaders(token), "Content-Type": "application/json" },
+        body: JSON.stringify({ text: supplierText }),
+      });
+      const data = await readJson<{ draft: SupplierDraft }>(response);
+      setSupplierDraft(data.draft);
+      setSupplierPublish(true);
+      toast.success("Draft ready — review it and save.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to draft supplier.");
+    } finally {
+      setDrafting(false);
+    }
+  }
+
+  function updateDraftProvider<K extends keyof ProviderDraft>(key: K, value: ProviderDraft[K]) {
+    setSupplierDraft((draft) =>
+      draft ? { ...draft, provider: { ...draft.provider, [key]: value } } : draft,
+    );
+  }
+
+  function updateDraftItem(index: number, patch: Partial<ItemDraft>) {
+    setSupplierDraft((draft) =>
+      draft
+        ? {
+            ...draft,
+            items: draft.items.map((item, i) => (i === index ? { ...item, ...patch } : item)),
+          }
+        : draft,
+    );
+  }
+
+  function removeDraftItem(index: number) {
+    setSupplierDraft((draft) =>
+      draft ? { ...draft, items: draft.items.filter((_, i) => i !== index) } : draft,
+    );
+  }
+
+  async function saveSupplier() {
+    if (!supplierDraft) return;
+    setSavingSupplier(true);
+
+    const cities = splitCities(supplierDraft.provider.coverageCities);
+    const payload = {
+      provider: {
+        name: supplierDraft.provider.name,
+        category: supplierDraft.provider.category,
+        website: supplierDraft.provider.website,
+        coverageCities: cities.length > 0 ? cities : ["Abu Dhabi"],
+        contactName: supplierDraft.provider.contactName,
+        contactEmail: supplierDraft.provider.contactEmail,
+        contactPhone: supplierDraft.provider.contactPhone,
+        leadMethod: supplierDraft.provider.leadMethod,
+        commercialModel: supplierDraft.provider.commercialModel,
+        integrationStatus: supplierDraft.provider.integrationStatus,
+        priority: supplierDraft.provider.priority,
+        nextStep: supplierDraft.provider.nextStep,
+        active: supplierPublish,
+      },
+      items: supplierDraft.items.map((item) => ({
+        type: item.type,
+        category: item.category,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        unit: item.unit,
+        availability: item.availability,
+        deliveryWindow: item.deliveryWindow,
+        checkoutMethod: item.checkoutMethod,
+        active: supplierPublish,
+      })),
+    };
+
+    try {
+      const response = await fetch("/api/admin/supplier", {
+        method: "POST",
+        headers: { ...authHeaders(token), "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await readJson<{ provider: ProviderRecord; items: CatalogItemRecord[] }>(
+        response,
+      );
+      toast.success(
+        `Saved ${data.provider.name} with ${data.items.length} item(s)${
+          supplierPublish ? "" : " (hidden until published)"
+        }.`,
+      );
+      setSupplierDraft(null);
+      setSupplierText("");
+      await loadSnapshot();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to save supplier.");
+    } finally {
+      setSavingSupplier(false);
+    }
   }
 
   async function saveProvider(event: FormEvent) {
@@ -519,6 +631,234 @@ function AdminPage() {
           <Stat label="Services" value={snapshot?.stats.services ?? "-"} />
           <Stat label="Need APIs" value={snapshot?.stats.apiNeeded ?? "-"} />
           <Stat label="Inquiries" value={snapshot?.stats.inquiries ?? "-"} />
+        </section>
+
+        <section className="border border-border bg-card p-5">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center bg-teal text-primary-foreground">
+              <Store className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="font-sans text-lg font-semibold tracking-normal">Add a supplier</h2>
+              <p className="text-sm text-muted-foreground">
+                Describe the provider in plain English — name, what they do, prices, contact. AI
+                turns it into a provider and its services for you to review before saving.
+              </p>
+            </div>
+          </div>
+
+          <Textarea
+            rows={3}
+            value={supplierText}
+            onChange={(event) => setSupplierText(event.target.value)}
+            placeholder={
+              'e.g. "Bin Yaber Movers, Abu Dhabi. Villa and apartment moves from AED 1,200, ' +
+              'quote within 24h. Also packing and short-term storage. WhatsApp +971 50 123 4567."'
+            }
+          />
+          <div className="mt-3">
+            <Button
+              type="button"
+              onClick={draftSupplier}
+              disabled={drafting || supplierText.trim().length < 10}
+              className="bg-teal text-primary-foreground hover:bg-teal/90"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              {drafting ? "Drafting..." : "Draft with AI"}
+            </Button>
+          </div>
+
+          {supplierDraft && (
+            <div className="mt-5 border-t border-border pt-5">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Provider name">
+                  <Input
+                    value={supplierDraft.provider.name}
+                    onChange={(event) => updateDraftProvider("name", event.target.value)}
+                  />
+                </Field>
+                <Field label="Category">
+                  <Input
+                    value={supplierDraft.provider.category}
+                    onChange={(event) => updateDraftProvider("category", event.target.value)}
+                  />
+                </Field>
+                <Field label="Coverage cities">
+                  <Input
+                    value={supplierDraft.provider.coverageCities}
+                    onChange={(event) => updateDraftProvider("coverageCities", event.target.value)}
+                  />
+                </Field>
+                <Field label="Website">
+                  <Input
+                    value={supplierDraft.provider.website}
+                    onChange={(event) => updateDraftProvider("website", event.target.value)}
+                  />
+                </Field>
+                <Field label="Contact phone / WhatsApp">
+                  <Input
+                    value={supplierDraft.provider.contactPhone}
+                    onChange={(event) => updateDraftProvider("contactPhone", event.target.value)}
+                  />
+                </Field>
+                <Field label="Contact email">
+                  <Input
+                    value={supplierDraft.provider.contactEmail}
+                    onChange={(event) => updateDraftProvider("contactEmail", event.target.value)}
+                  />
+                </Field>
+                <Field label="Integration">
+                  <Select
+                    value={supplierDraft.provider.integrationStatus}
+                    onValueChange={(value) =>
+                      updateDraftProvider(
+                        "integrationStatus",
+                        value as ProviderDraft["integrationStatus"],
+                      )
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manual">Manual</SelectItem>
+                      <SelectItem value="csv">CSV</SelectItem>
+                      <SelectItem value="api-needed">API needed</SelectItem>
+                      <SelectItem value="api-connected">API connected</SelectItem>
+                      <SelectItem value="partner-ready">Partner ready</SelectItem>
+                      <SelectItem value="mock">Mock</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Priority">
+                  <Select
+                    value={supplierDraft.provider.priority}
+                    onValueChange={(value) =>
+                      updateDraftProvider("priority", value as ProviderDraft["priority"])
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+
+              <div className="mt-5 grid gap-3">
+                {supplierDraft.items.map((item, index) => (
+                  <div key={index} className="border border-border p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        Item {index + 1}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeDraftItem(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field label="Name">
+                        <Input
+                          value={item.name}
+                          onChange={(event) => updateDraftItem(index, { name: event.target.value })}
+                        />
+                      </Field>
+                      <Field label="Category">
+                        <Input
+                          value={item.category}
+                          onChange={(event) =>
+                            updateDraftItem(index, { category: event.target.value })
+                          }
+                        />
+                      </Field>
+                      <Field label="Type">
+                        <Select
+                          value={item.type}
+                          onValueChange={(value) =>
+                            updateDraftItem(index, { type: value as ItemDraft["type"] })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="product">Product</SelectItem>
+                            <SelectItem value="service">Service</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                      <Field label="Price">
+                        <Input
+                          value={item.price}
+                          onChange={(event) =>
+                            updateDraftItem(index, { price: event.target.value })
+                          }
+                        />
+                      </Field>
+                      <Field label="Availability">
+                        <Input
+                          value={item.availability}
+                          onChange={(event) =>
+                            updateDraftItem(index, { availability: event.target.value })
+                          }
+                        />
+                      </Field>
+                      <Field label="Delivery / lead time">
+                        <Input
+                          value={item.deliveryWindow}
+                          onChange={(event) =>
+                            updateDraftItem(index, { deliveryWindow: event.target.value })
+                          }
+                        />
+                      </Field>
+                    </div>
+                  </div>
+                ))}
+                {supplierDraft.items.length === 0 && (
+                  <div className="border border-dashed border-border p-4 text-sm text-muted-foreground">
+                    No items yet. Add detail to the description and re-draft, or save the provider
+                    on its own.
+                  </div>
+                )}
+              </div>
+
+              <label className="mt-4 flex items-center gap-2 text-sm text-foreground">
+                <Checkbox
+                  checked={supplierPublish}
+                  onCheckedChange={(value) => setSupplierPublish(value === true)}
+                />
+                Publish to the live site now (untick to save hidden until you confirm terms)
+              </label>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  onClick={saveSupplier}
+                  disabled={
+                    savingSupplier ||
+                    supplierDraft.provider.name.trim().length < 2 ||
+                    supplierDraft.provider.category.trim().length < 2
+                  }
+                  className="bg-teal text-primary-foreground hover:bg-teal/90"
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  {savingSupplier ? "Saving..." : "Save supplier"}
+                </Button>
+                <Button type="button" variant="ghost" onClick={() => setSupplierDraft(null)}>
+                  Discard
+                </Button>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">

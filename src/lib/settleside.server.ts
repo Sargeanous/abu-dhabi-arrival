@@ -12,6 +12,7 @@ import {
   marketplaceQuerySchema,
   providerRecordSchema,
   providerUpsertSchema,
+  supplierSaveSchema,
   type AdminCatalogSnapshot,
   type CatalogItemRecord,
   type CatalogItemUpsert,
@@ -286,6 +287,18 @@ export async function upsertCatalogItem(input: CatalogItemUpsert) {
 
   await writeCatalogStore(store);
   return item;
+}
+
+export async function saveSupplier(input: unknown) {
+  const parsed = supplierSaveSchema.parse(input);
+  const provider = await upsertProvider(parsed.provider);
+  const items: CatalogItemRecord[] = [];
+
+  for (const item of parsed.items) {
+    items.push(await upsertCatalogItem({ ...item, providerKey: provider.key }));
+  }
+
+  return { provider, items };
 }
 
 function parseBoolean(value: string | undefined, fallback = true) {

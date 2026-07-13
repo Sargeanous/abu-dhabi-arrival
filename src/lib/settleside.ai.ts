@@ -9,11 +9,13 @@ import {
   HELP_OPTIONS,
   moveIntakeDraftSchema,
   moveIntelligenceSchema,
+  supplierDraftSchema,
   type CatalogCsvMapping,
   type InquiryInput,
   type MarketplaceSnapshot,
   type MoveIntakeParseResult,
   type MoveIntelligence,
+  type SupplierDraft,
 } from "./settleside.schemas";
 
 const DEFAULT_MODEL = "claude-opus-4-8";
@@ -420,6 +422,156 @@ export async function mapCatalogCsvColumns(
   } catch (error) {
     if (error instanceof ZodError || error instanceof SyntaxError) {
       console.error("SettleSide AI CSV mapping produced an unexpected shape:", error);
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+const SUPPLIER_OUTPUT_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["provider", "items"],
+  properties: {
+    provider: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "name",
+        "category",
+        "website",
+        "coverageCities",
+        "contactName",
+        "contactEmail",
+        "contactPhone",
+        "leadMethod",
+        "commercialModel",
+        "integrationStatus",
+        "priority",
+        "nextStep",
+      ],
+      properties: {
+        name: { type: "string", description: "Provider or company name." },
+        category: {
+          type: "string",
+          description:
+            'Short provider category, e.g. "Movers and shipping", "Internet and utilities", "Furniture and home essentials", "Cleaning".',
+        },
+        website: { type: "string", description: "Website URL if stated, else empty string." },
+        coverageCities: {
+          type: "string",
+          description:
+            'Comma-separated cities served, e.g. "Abu Dhabi, Dubai". Default "Abu Dhabi".',
+        },
+        contactName: {
+          type: "string",
+          description: "Contact person if stated, else empty string.",
+        },
+        contactEmail: { type: "string", description: "Email if stated, else empty string." },
+        contactPhone: {
+          type: "string",
+          description: "Phone or WhatsApp number if stated, else empty string.",
+        },
+        leadMethod: { type: "string", enum: ["email", "whatsapp", "api", "manual"] },
+        commercialModel: {
+          type: "string",
+          enum: ["commission", "referral", "markup", "subscription", "none", "unknown"],
+        },
+        integrationStatus: {
+          type: "string",
+          enum: ["mock", "manual", "csv", "api-needed", "api-connected", "partner-ready"],
+        },
+        priority: { type: "string", enum: ["high", "medium", "low"] },
+        nextStep: {
+          type: "string",
+          description: "One short onboarding next step, else empty string.",
+        },
+      },
+    },
+    items: {
+      type: "array",
+      description: "Each distinct product or service the provider offers (at least one).",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "type",
+          "category",
+          "name",
+          "description",
+          "price",
+          "unit",
+          "availability",
+          "deliveryWindow",
+          "checkoutMethod",
+        ],
+        properties: {
+          type: { type: "string", enum: ["product", "service"] },
+          category: {
+            type: "string",
+            description:
+              'Short grouping, e.g. "Movers & shipping", "Internet", "Sofa", "Cleaning".',
+          },
+          name: { type: "string", description: "Item or offer name." },
+          description: { type: "string" },
+          price: {
+            type: "string",
+            description:
+              'Display price exactly as stated, e.g. "AED 1,200", "From AED 450". Use "Quote required" when no price is given - never invent one.',
+          },
+          unit: {
+            type: "string",
+            description:
+              'Billing unit if clear, e.g. "one-time", "monthly", "per move". Else empty.',
+          },
+          availability: { type: "string", description: "Availability text, else empty string." },
+          deliveryWindow: {
+            type: "string",
+            description: "Lead time if stated, else empty string.",
+          },
+          checkoutMethod: {
+            type: "string",
+            enum: ["lead", "affiliate-link", "checkout", "booking", "manual"],
+          },
+        },
+      },
+    },
+  },
+};
+
+function supplierIntakeSystemPrompt() {
+  return `You are the supplier onboarding assistant for SettleSide, a relocation marketplace in the UAE (default city Abu Dhabi). Turn the operator's free-text description of a provider into one structured provider record plus its catalog items (the products or services it offers).
+
+Rules:
+- Extract only what the description states. Never invent prices, phone numbers, or websites. Use "Quote required" for price when none is given, and empty strings for unknown text fields.
+- Split the offering into separate items when the provider clearly does distinct things (e.g. a mover that also offers storage becomes two items).
+- type: "product" for physical goods, "service" for bookable work.
+- coverageCities: comma-separated; default "Abu Dhabi" if not stated.
+- Sensible enum defaults: leadMethod "manual" (or "whatsapp"/"email" when a channel is given), commercialModel "unknown", integrationStatus "manual", priority "medium", checkoutMethod "lead" for services and quotes (use "affiliate-link" or "checkout" only when an online purchase link is described).
+- Keep category names short and human.`;
+}
+
+export async function parseSupplierIntake(text: string): Promise<SupplierDraft | null> {
+  const call = await structuredCall({
+    system: supplierIntakeSystemPrompt(),
+    user: text,
+    schema: SUPPLIER_OUTPUT_SCHEMA,
+    maxTokens: 2048,
+  });
+
+  if (!call.ok) {
+    if (call.reason !== "not-configured") {
+      console.error("SettleSide AI supplier intake failed:", call.reason, call.message);
+    }
+    return null;
+  }
+
+  try {
+    return supplierDraftSchema.parse(JSON.parse(call.text));
+  } catch (error) {
+    if (error instanceof ZodError || error instanceof SyntaxError) {
+      console.error("SettleSide AI supplier intake produced an unexpected shape:", error);
       return null;
     }
 

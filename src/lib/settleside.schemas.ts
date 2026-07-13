@@ -219,6 +219,57 @@ export const catalogCsvMapRequestSchema = z.object({
   csv: z.string().trim().min(1, "Paste CSV text first."),
 });
 
+// Supplier intake: free text describing a provider -> one provider + its items.
+export const supplierIntakeRequestSchema = z.object({
+  text: z.string().trim().min(10, "Describe the supplier first.").max(4000),
+});
+
+// AI draft shape (resilient parsing via .catch); coverageCities kept as a
+// comma-separated string for easy review-panel editing, split at save time.
+export const supplierDraftSchema = z.object({
+  provider: z.object({
+    name: z.string().trim().max(160).catch(""),
+    category: z.string().trim().max(120).catch(""),
+    website: z.string().trim().max(300).catch(""),
+    coverageCities: z.string().trim().max(300).catch("Abu Dhabi"),
+    contactName: z.string().trim().max(120).catch(""),
+    contactEmail: z.string().trim().max(160).catch(""),
+    contactPhone: z.string().trim().max(80).catch(""),
+    leadMethod: leadMethodSchema.catch("manual"),
+    commercialModel: commercialModelSchema.catch("unknown"),
+    integrationStatus: integrationStatusSchema.catch("manual"),
+    priority: prioritySchema.catch("medium"),
+    nextStep: z.string().trim().max(300).catch(""),
+  }),
+  items: z
+    .array(
+      z.object({
+        type: catalogItemTypeSchema.catch("service"),
+        category: z.string().trim().max(120).catch(""),
+        name: z.string().trim().max(180).catch(""),
+        description: z.string().trim().max(800).catch(""),
+        price: z.string().trim().max(80).catch("Quote required"),
+        unit: z.string().trim().max(80).catch(""),
+        availability: z.string().trim().max(120).catch("On request"),
+        deliveryWindow: z.string().trim().max(120).catch("To be confirmed"),
+        checkoutMethod: checkoutMethodSchema.catch("lead"),
+      }),
+    )
+    .max(20)
+    .catch([]),
+});
+
+export type SupplierDraft = z.infer<typeof supplierDraftSchema>;
+
+// Finalized (reviewed) save payload: real ProviderUpsert + items minus the
+// providerKey, which the server injects from the just-saved provider.
+export const supplierSaveSchema = z.object({
+  provider: providerUpsertSchema,
+  items: z.array(catalogItemUpsertSchema.omit({ providerKey: true })).max(20),
+});
+
+export type SupplierSaveInput = z.infer<typeof supplierSaveSchema>;
+
 export type InquiryInput = z.infer<typeof inquirySchema>;
 export type MarketplaceQuery = z.infer<typeof marketplaceQuerySchema>;
 export type MarketplaceProduct = z.infer<typeof marketplaceProductSchema>;

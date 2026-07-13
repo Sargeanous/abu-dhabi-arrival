@@ -16,6 +16,8 @@ import { Route as ApiIntakeRouteImport } from './routes/api/intake'
 import { Route as ApiInquiriesRouteImport } from './routes/api/inquiries'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiCatalogRouteImport } from './routes/api/catalog'
+import { Route as ApiAdminSupplierDraftRouteImport } from './routes/api/admin/supplier-draft'
+import { Route as ApiAdminSupplierRouteImport } from './routes/api/admin/supplier'
 import { Route as ApiAdminSnapshotRouteImport } from './routes/api/admin/snapshot'
 import { Route as ApiAdminProvidersRouteImport } from './routes/api/admin/providers'
 import { Route as ApiAdminLoginRouteImport } from './routes/api/admin/login'
@@ -57,6 +59,16 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
 const ApiCatalogRoute = ApiCatalogRouteImport.update({
   id: '/api/catalog',
   path: '/api/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminSupplierDraftRoute = ApiAdminSupplierDraftRouteImport.update({
+  id: '/api/admin/supplier-draft',
+  path: '/api/admin/supplier-draft',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminSupplierRoute = ApiAdminSupplierRouteImport.update({
+  id: '/api/admin/supplier',
+  path: '/api/admin/supplier',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminSnapshotRoute = ApiAdminSnapshotRouteImport.update({
@@ -111,6 +123,8 @@ export interface FileRoutesByFullPath {
   '/api/admin/login': typeof ApiAdminLoginRoute
   '/api/admin/providers': typeof ApiAdminProvidersRoute
   '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
+  '/api/admin/supplier': typeof ApiAdminSupplierRoute
+  '/api/admin/supplier-draft': typeof ApiAdminSupplierDraftRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -127,6 +141,8 @@ export interface FileRoutesByTo {
   '/api/admin/login': typeof ApiAdminLoginRoute
   '/api/admin/providers': typeof ApiAdminProvidersRoute
   '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
+  '/api/admin/supplier': typeof ApiAdminSupplierRoute
+  '/api/admin/supplier-draft': typeof ApiAdminSupplierDraftRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -144,6 +160,8 @@ export interface FileRoutesById {
   '/api/admin/login': typeof ApiAdminLoginRoute
   '/api/admin/providers': typeof ApiAdminProvidersRoute
   '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
+  '/api/admin/supplier': typeof ApiAdminSupplierRoute
+  '/api/admin/supplier-draft': typeof ApiAdminSupplierDraftRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -162,6 +180,8 @@ export interface FileRouteTypes {
     | '/api/admin/login'
     | '/api/admin/providers'
     | '/api/admin/snapshot'
+    | '/api/admin/supplier'
+    | '/api/admin/supplier-draft'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -178,6 +198,8 @@ export interface FileRouteTypes {
     | '/api/admin/login'
     | '/api/admin/providers'
     | '/api/admin/snapshot'
+    | '/api/admin/supplier'
+    | '/api/admin/supplier-draft'
   id:
     | '__root__'
     | '/'
@@ -194,6 +216,8 @@ export interface FileRouteTypes {
     | '/api/admin/login'
     | '/api/admin/providers'
     | '/api/admin/snapshot'
+    | '/api/admin/supplier'
+    | '/api/admin/supplier-draft'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -211,6 +235,8 @@ export interface RootRouteChildren {
   ApiAdminLoginRoute: typeof ApiAdminLoginRoute
   ApiAdminProvidersRoute: typeof ApiAdminProvidersRoute
   ApiAdminSnapshotRoute: typeof ApiAdminSnapshotRoute
+  ApiAdminSupplierRoute: typeof ApiAdminSupplierRoute
+  ApiAdminSupplierDraftRoute: typeof ApiAdminSupplierDraftRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -262,6 +288,20 @@ declare module '@tanstack/react-router' {
       path: '/api/catalog'
       fullPath: '/api/catalog'
       preLoaderRoute: typeof ApiCatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/supplier-draft': {
+      id: '/api/admin/supplier-draft'
+      path: '/api/admin/supplier-draft'
+      fullPath: '/api/admin/supplier-draft'
+      preLoaderRoute: typeof ApiAdminSupplierDraftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/supplier': {
+      id: '/api/admin/supplier'
+      path: '/api/admin/supplier'
+      fullPath: '/api/admin/supplier'
+      preLoaderRoute: typeof ApiAdminSupplierRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/admin/snapshot': {
@@ -331,6 +371,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminLoginRoute: ApiAdminLoginRoute,
   ApiAdminProvidersRoute: ApiAdminProvidersRoute,
   ApiAdminSnapshotRoute: ApiAdminSnapshotRoute,
+  ApiAdminSupplierRoute: ApiAdminSupplierRoute,
+  ApiAdminSupplierDraftRoute: ApiAdminSupplierDraftRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
