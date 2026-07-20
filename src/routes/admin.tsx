@@ -1024,6 +1024,15 @@ function AdminPage() {
                   />
                 </Field>
               </div>
+              <label className="flex items-center gap-2 text-sm text-foreground sm:col-span-2">
+                <Checkbox
+                  checked={providerForm.active}
+                  onCheckedChange={(value) =>
+                    setProviderForm((form) => ({ ...form, active: value === true }))
+                  }
+                />
+                Published on the live site (untick to keep as a hidden prospect)
+              </label>
             </div>
           </form>
 
@@ -1170,6 +1179,15 @@ function AdminPage() {
                   />
                 </Field>
               </div>
+              <label className="flex items-center gap-2 text-sm text-foreground sm:col-span-2">
+                <Checkbox
+                  checked={catalogForm.active}
+                  onCheckedChange={(value) =>
+                    setCatalogForm((form) => ({ ...form, active: value === true }))
+                  }
+                />
+                Published on the live site (untick to keep hidden)
+              </label>
             </div>
           </form>
         </section>
@@ -1319,13 +1337,13 @@ function AdminPage() {
           <DataTable
             title="Providers"
             rows={snapshot?.providers ?? []}
-            columns={["name", "category", "integrationStatus", "priority"]}
+            columns={["name", "category", "priority", "active"]}
             onEdit={(row) => setProviderForm(providerFormFromRecord(row as ProviderRecord))}
           />
           <DataTable
             title="Catalog"
             rows={snapshot?.catalogItems ?? []}
-            columns={["name", "type", "category", "providerKey", "price"]}
+            columns={["name", "category", "providerKey", "price", "active"]}
             onEdit={(row) => setCatalogForm(catalogFormFromRecord(row as CatalogItemRecord))}
           />
         </section>
