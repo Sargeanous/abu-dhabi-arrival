@@ -5,9 +5,11 @@ SettleSide is a TanStack Start app for an end-to-end relocation assistant. The c
 ## Local Development
 
 ```bash
-npm install --no-package-lock
+npm install
 npm run dev
 ```
+
+`package-lock.json` is committed on purpose: production Docker builds run `npm ci` against it so deploys use exactly the dependency versions verified locally. Don't delete it or install with `--no-package-lock`.
 
 The dev server prints the local URL, usually `http://localhost:5173`.
 

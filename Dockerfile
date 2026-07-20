@@ -1,8 +1,11 @@
 # SettleSide production image (Fly.io)
 FROM node:22-slim AS build
 WORKDIR /app
-COPY package.json ./
-RUN npm install --no-package-lock
+# npm ci against the committed lockfile: production builds use exactly the
+# dependency versions verified locally (an unpinned install once pulled a
+# newer vite/h3 stack that broke POST body parsing in production).
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
 ENV SETTLESIDE_DEPLOY_TARGET=node
 RUN npm run build
