@@ -1,5 +1,5 @@
 # SettleSide production image (Fly.io)
-FROM node:22-slim AS build
+FROM node:24-slim AS build
 WORKDIR /app
 # npm ci against the committed lockfile: production builds use exactly the
 # dependency versions verified locally (an unpinned install once pulled a
@@ -10,7 +10,7 @@ COPY . .
 ENV SETTLESIDE_DEPLOY_TARGET=node
 RUN npm run build
 
-FROM node:22-slim
+FROM node:24-slim
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/.output ./.output
