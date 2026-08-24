@@ -1,5 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Database, LogOut, RefreshCw, Save, Sparkles, Store, Trash2, Upload } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Database,
+  LogOut,
+  RefreshCw,
+  Save,
+  Sparkles,
+  Store,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
@@ -24,6 +35,7 @@ import type {
   CatalogItemUpsert,
   CsvImportResult,
   InquiryAdminSummary,
+  InquiryRecord,
   ProviderRecord,
   ProviderUpsert,
   SupplierDraft,
@@ -162,6 +174,191 @@ function catalogFormFromRecord(item: CatalogItemRecord): CatalogForm {
     commissionModel: item.commissionModel,
     source: item.source,
   };
+}
+
+function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1800);
+        } catch {
+          toast.error("Couldn't copy — select the text and copy manually.");
+        }
+      }}
+    >
+      {copied ? <Check className="mr-2 h-3.5 w-3.5" /> : <Copy className="mr-2 h-3.5 w-3.5" />}
+      {copied ? "Copied" : label}
+    </Button>
+  );
+}
+
+function MoveDesk({
+  inquiry,
+  busy,
+  onRun,
+}: {
+  inquiry: InquiryRecord;
+  busy: string | null;
+  onRun: (action: "briefs" | "quotes" | "recommendation", rawQuotes?: string) => void;
+}) {
+  const [rawQuotes, setRawQuotes] = useState("");
+  const comparison = inquiry.quoteComparison;
+
+  return (
+    <div className="mt-4 border-t border-border pt-4">
+      <div className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-teal">
+        <Sparkles className="h-3.5 w-3.5" />
+        Move desk
+      </div>
+
+      {/* Step 1 - provider briefs */}
+      <div className="mb-5">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-sm font-medium text-foreground">
+            1. Request quotes from providers
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy !== null}
+            onClick={() => onRun("briefs")}
+          >
+            <Sparkles className="mr-2 h-3.5 w-3.5" />
+            {busy === "briefs" ? "Writing..." : inquiry.briefs ? "Rewrite briefs" : "Draft briefs"}
+          </Button>
+        </div>
+        {inquiry.briefs?.length ? (
+          <div className="grid gap-2">
+            {inquiry.briefs.map((brief) => (
+              <details key={brief.category} className="border border-border bg-sand/40 p-3">
+                <summary className="cursor-pointer text-sm font-medium text-foreground">
+                  {brief.category}
+                </summary>
+                <div className="mt-2 text-xs text-muted-foreground">{brief.subject}</div>
+                <pre className="mt-2 whitespace-pre-wrap font-sans text-xs leading-relaxed text-foreground">
+                  {brief.message}
+                </pre>
+                <div className="mt-3">
+                  <CopyButton text={brief.message} label="Copy message" />
+                </div>
+              </details>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Generates one ready-to-send message per category, with everything a provider needs to
+            quote and nothing that identifies the customer.
+          </p>
+        )}
+      </div>
+
+      {/* Step 2 - normalise quotes */}
+      <div className="mb-5">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-sm font-medium text-foreground">2. Compare what came back</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy !== null || rawQuotes.trim().length < 20}
+            onClick={() => onRun("quotes", rawQuotes)}
+          >
+            <Sparkles className="mr-2 h-3.5 w-3.5" />
+            {busy === "quotes" ? "Reading..." : "Compare quotes"}
+          </Button>
+        </div>
+        <Textarea
+          rows={3}
+          value={rawQuotes}
+          onChange={(event) => setRawQuotes(event.target.value)}
+          placeholder="Paste the replies exactly as they came in — WhatsApp messages, emails, copied PDF text. Several at once is fine."
+          className="text-xs"
+        />
+        {comparison?.quotes.length ? (
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[560px] text-left text-xs">
+              <thead className="bg-sand text-[11px] uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 font-medium">Provider</th>
+                  <th className="px-3 py-2 font-medium">Price</th>
+                  <th className="px-3 py-2 font-medium">Lead time</th>
+                  <th className="px-3 py-2 font-medium">Includes / excludes</th>
+                  <th className="px-3 py-2 font-medium">Watch out</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparison.quotes.map((quote, index) => (
+                  <tr key={`${quote.provider}-${index}`} className="border-t border-border">
+                    <td className="px-3 py-2 font-medium text-foreground">{quote.provider}</td>
+                    <td className="px-3 py-2 text-foreground">{quote.price}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{quote.leadTime || "-"}</td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {quote.includes.length > 0 && <div>+ {quote.includes.join(", ")}</div>}
+                      {quote.excludes.length > 0 && (
+                        <div className="text-terracotta">- {quote.excludes.join(", ")}</div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">{quote.concerns || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {comparison.comparisonNotes && (
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                {comparison.comparisonNotes}
+              </p>
+            )}
+          </div>
+        ) : null}
+      </div>
+
+      {/* Step 3 - recommendation */}
+      <div>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-sm font-medium text-foreground">3. Reply to the customer</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy !== null || !comparison?.quotes.length}
+            onClick={() => onRun("recommendation")}
+          >
+            <Sparkles className="mr-2 h-3.5 w-3.5" />
+            {busy === "recommendation" ? "Drafting..." : "Draft reply"}
+          </Button>
+        </div>
+        {inquiry.recommendation ? (
+          <div className="border border-teal/30 bg-teal/5 p-3">
+            <div className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">
+                Pick: {inquiry.recommendation.pick}
+              </span>{" "}
+              — {inquiry.recommendation.reasoning}
+            </div>
+            <pre className="mt-3 whitespace-pre-wrap border-t border-teal/20 pt-3 font-sans text-xs leading-relaxed text-foreground">
+              {inquiry.recommendation.customerMessage}
+            </pre>
+            <div className="mt-3">
+              <CopyButton text={inquiry.recommendation.customerMessage} label="Copy reply" />
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Turns the comparison into a message you can send: the options, your recommendation, and
+            why — weighed against what this customer said matters most.
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function Stat({ label, value }: { label: string; value: string | number }) {
@@ -450,6 +647,37 @@ function AdminPage() {
   }
 
   const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [openDeskId, setOpenDeskId] = useState<string | null>(null);
+  const [deskBusy, setDeskBusy] = useState<string | null>(null);
+
+  async function runMoveDesk(
+    id: string,
+    action: "briefs" | "quotes" | "recommendation",
+    rawQuotes?: string,
+  ) {
+    setDeskBusy(action);
+
+    try {
+      const response = await fetch("/api/admin/move-desk", {
+        method: "POST",
+        headers: { ...authHeaders(token), "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action, rawQuotes }),
+      });
+      await readJson<{ inquiry: unknown }>(response);
+      toast.success(
+        action === "briefs"
+          ? "Provider briefs ready."
+          : action === "quotes"
+            ? "Quotes compared."
+            : "Reply drafted.",
+      );
+      await loadSnapshot();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Move desk action failed.");
+    } finally {
+      setDeskBusy(null);
+    }
+  }
 
   async function generateIntelligence(id: string) {
     setGeneratingId(id);
@@ -1326,6 +1554,26 @@ function AdminPage() {
                       <Sparkles className="mr-2 h-3.5 w-3.5" />
                       {generatingId === inquiry.id ? "Generating..." : "Generate AI summary"}
                     </Button>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() =>
+                      setOpenDeskId((current) => (current === inquiry.id ? null : inquiry.id))
+                    }
+                  >
+                    {openDeskId === inquiry.id ? "Close move desk" : "Open move desk"}
+                  </Button>
+
+                  {openDeskId === inquiry.id && (
+                    <MoveDesk
+                      inquiry={inquiry}
+                      busy={deskBusy}
+                      onRun={(action, rawQuotes) => runMoveDesk(inquiry.id, action, rawQuotes)}
+                    />
                   )}
                 </div>
               ))}

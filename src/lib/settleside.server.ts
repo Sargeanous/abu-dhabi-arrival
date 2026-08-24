@@ -1,6 +1,12 @@
 import "@tanstack/react-start/server-only";
 
-import { generateMoveIntelligence, mapCatalogCsvColumns } from "./settleside.ai";
+import {
+  draftQuoteRecommendation,
+  generateMoveIntelligence,
+  generateProviderBriefs,
+  mapCatalogCsvColumns,
+  normalizeQuotes,
+} from "./settleside.ai";
 import { rankCatalogItems, toMatchInsight } from "./settleside.matching";
 import { sendCustomerConfirmation, sendInquiryNotification } from "./settleside.notify";
 import {
@@ -644,6 +650,68 @@ export async function createInquiry(input: InquiryInput) {
 
 export async function listInquiries() {
   return readInquiries();
+}
+
+export async function runMoveDeskAction(input: {
+  id: string;
+  action: "briefs" | "quotes" | "recommendation";
+  rawQuotes?: string;
+}) {
+  const records = await readInquiries();
+  const index = records.findIndex((record) => record.id === input.id);
+
+  if (index < 0) {
+    return { ok: false as const, error: "not-found" as const };
+  }
+
+  const record = records[index];
+  let updated = record;
+
+  if (input.action === "briefs") {
+    // Quote the categories the customer asked for; fall back to whatever the
+    // matcher surfaced so a request with no help boxes ticked still works.
+    const categories = Array.from(
+      new Set(
+        record.inquiry.help.length > 0
+          ? record.inquiry.help.map((option) => option.replace(/\s*\(optional\)$/, ""))
+          : record.matchedServices.map((service) => service.category),
+      ),
+    );
+
+    if (categories.length === 0) {
+      return { ok: false as const, error: "no-categories" as const };
+    }
+
+    const briefs = await generateProviderBriefs(record.inquiry, categories);
+    if (!briefs) return { ok: false as const, error: "ai-unavailable" as const };
+    updated = { ...record, briefs };
+  }
+
+  if (input.action === "quotes") {
+    const rawQuotes = (input.rawQuotes ?? "").trim();
+    if (rawQuotes.length < 20) {
+      return { ok: false as const, error: "no-quotes" as const };
+    }
+
+    const quoteComparison = await normalizeQuotes(record.inquiry, rawQuotes);
+    if (!quoteComparison) return { ok: false as const, error: "ai-unavailable" as const };
+    // A fresh set of quotes invalidates any recommendation built on the old set.
+    updated = { ...record, quoteComparison, recommendation: undefined };
+  }
+
+  if (input.action === "recommendation") {
+    if (!record.quoteComparison || record.quoteComparison.quotes.length === 0) {
+      return { ok: false as const, error: "no-quotes" as const };
+    }
+
+    const recommendation = await draftQuoteRecommendation(record.inquiry, record.quoteComparison);
+    if (!recommendation) return { ok: false as const, error: "ai-unavailable" as const };
+    updated = { ...record, recommendation };
+  }
+
+  records[index] = updated;
+  await writeInquiries(records);
+  return { ok: true as const, inquiry: updated };
 }
 
 export async function regenerateInquiryIntelligence(id: string) {

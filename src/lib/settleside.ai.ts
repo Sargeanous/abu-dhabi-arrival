@@ -9,12 +9,18 @@ import {
   HELP_OPTIONS,
   moveIntakeDraftSchema,
   moveIntelligenceSchema,
+  providerBriefsSchema,
+  quoteComparisonSchema,
+  quoteRecommendationSchema,
   supplierDraftSchema,
   type CatalogCsvMapping,
   type InquiryInput,
   type MarketplaceSnapshot,
   type MoveIntakeParseResult,
   type MoveIntelligence,
+  type ProviderBrief,
+  type QuoteComparison,
+  type QuoteRecommendation,
   type SupplierDraft,
 } from "./settleside.schemas";
 
@@ -613,6 +619,229 @@ export async function parseSupplierIntake(text: string): Promise<SupplierDraft |
       return null;
     }
 
+    throw error;
+  }
+}
+
+/* ---------- Move desk: operator-side AI ---------- */
+
+const BRIEFS_OUTPUT_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["briefs"],
+  properties: {
+    briefs: {
+      type: "array",
+      description: "One brief per service category the customer needs.",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["category", "subject", "message"],
+        properties: {
+          category: { type: "string", description: "The service category this brief is for." },
+          subject: { type: "string", description: "Short subject line for email." },
+          message: {
+            type: "string",
+            description:
+              "The full request-for-quote message, ready to send as-is to a provider. Plain text, no markdown.",
+          },
+        },
+      },
+    },
+  },
+};
+
+function briefsSystemPrompt() {
+  const today = new Date().toISOString().slice(0, 10);
+  return `You write request-for-quote messages that a relocation concierge (SettleSide, Abu Dhabi) sends to service providers on behalf of a customer. Today is ${today}.
+
+Write one brief per service category the customer needs.
+
+Rules:
+- Each message must be ready to send with no editing: a short greeting, the scope, and a clear ask.
+- Include every detail from the move request that affects the price for THAT category, and omit details that do not. A mover needs property sizes, floors, lift access, inventory, special items, packing and storage needs, and dates. A cleaner needs property size, access, and date. An internet provider needs the address area and move-in date.
+- Never include the customer's name, email, or phone number. The concierge handles contact; providers quote to SettleSide.
+- Always ask for the same things so quotes are comparable: total price, what is included and excluded, lead time or earliest available date, insurance or liability cover, and how long the quote is valid.
+- State the target date and whether it is fixed or flexible.
+- Be concise and professional. Plain text only, no markdown, no placeholders like [insert X] — if a detail is unknown, ask the provider what they need rather than leaving a blank.
+- Sign off as SettleSide.`;
+}
+
+export async function generateProviderBriefs(
+  inquiry: InquiryInput,
+  categories: string[],
+): Promise<ProviderBrief[] | null> {
+  const call = await structuredCall({
+    system: briefsSystemPrompt(),
+    user: JSON.stringify({ moveRequest: inquiry, categoriesToQuote: categories }, null, 2),
+    schema: BRIEFS_OUTPUT_SCHEMA,
+    maxTokens: 4096,
+  });
+
+  if (!call.ok) {
+    if (call.reason !== "not-configured") {
+      console.error("SettleSide AI briefs failed:", call.reason, call.message);
+    }
+    return null;
+  }
+
+  try {
+    return providerBriefsSchema.parse(JSON.parse(call.text)).briefs;
+  } catch (error) {
+    if (error instanceof ZodError || error instanceof SyntaxError) {
+      console.error("SettleSide AI briefs produced an unexpected shape:", error);
+      return null;
+    }
+    throw error;
+  }
+}
+
+const QUOTES_OUTPUT_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["quotes", "comparisonNotes"],
+  properties: {
+    quotes: {
+      type: "array",
+      description: "One entry per distinct provider quote found in the pasted text.",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "provider",
+          "category",
+          "price",
+          "leadTime",
+          "includes",
+          "excludes",
+          "insurance",
+          "validity",
+          "concerns",
+        ],
+        properties: {
+          provider: { type: "string", description: "Provider name as given." },
+          category: { type: "string", description: "Service category this quote is for." },
+          price: {
+            type: "string",
+            description:
+              'Total price exactly as quoted, e.g. "AED 4,200" or "AED 3,800 + 5% VAT". Use "Not stated" if absent - never estimate.',
+          },
+          leadTime: { type: "string", description: "Lead time or availability, else empty." },
+          includes: { type: "array", items: { type: "string" }, description: "What is included." },
+          excludes: {
+            type: "array",
+            items: { type: "string" },
+            description: "What is excluded or charged extra.",
+          },
+          insurance: { type: "string", description: "Insurance or liability terms, else empty." },
+          validity: { type: "string", description: "How long the quote is valid, else empty." },
+          concerns: {
+            type: "string",
+            description:
+              "Anything the concierge should question: vague scope, missing insurance, unusual terms, hidden costs. Empty if none.",
+          },
+        },
+      },
+    },
+    comparisonNotes: {
+      type: "string",
+      description:
+        "Two or three sentences comparing the quotes on a like-for-like basis, calling out where they are not actually comparable.",
+    },
+  },
+};
+
+export async function normalizeQuotes(
+  inquiry: InquiryInput,
+  rawQuotes: string,
+): Promise<QuoteComparison | null> {
+  const call = await structuredCall({
+    system: `You normalise service quotes for a relocation concierge so they can be compared like for like.
+
+The operator pastes raw quotes exactly as providers sent them - WhatsApp messages, emails, copied PDF text - in any format and possibly several at once.
+
+Rules:
+- Extract one entry per distinct provider quote. Never merge two providers, never invent a quote that is not in the text.
+- Copy prices exactly as quoted. If a quote states no price, use "Not stated". Never estimate, convert, or infer a number.
+- Note whether VAT is included when the text says so.
+- concerns: flag real risks for the customer - missing insurance, vague scope, exclusions that will cost more later, unusually short validity. Leave empty when there is nothing to flag.
+- comparisonNotes: say plainly where quotes are not comparable (e.g. one includes packing materials and another does not).`,
+    user: JSON.stringify({ moveRequest: inquiry, rawQuotes }, null, 2),
+    schema: QUOTES_OUTPUT_SCHEMA,
+    maxTokens: 4096,
+  });
+
+  if (!call.ok) {
+    if (call.reason !== "not-configured") {
+      console.error("SettleSide AI quote parsing failed:", call.reason, call.message);
+    }
+    return null;
+  }
+
+  try {
+    return quoteComparisonSchema.parse(JSON.parse(call.text));
+  } catch (error) {
+    if (error instanceof ZodError || error instanceof SyntaxError) {
+      console.error("SettleSide AI quote parsing produced an unexpected shape:", error);
+      return null;
+    }
+    throw error;
+  }
+}
+
+const RECOMMENDATION_OUTPUT_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["pick", "reasoning", "customerMessage"],
+  properties: {
+    pick: { type: "string", description: "The recommended provider's name." },
+    reasoning: {
+      type: "string",
+      description:
+        "Why this one, for the operator's eyes: the trade-off in two or three sentences.",
+    },
+    customerMessage: {
+      type: "string",
+      description:
+        "The message to send the customer, ready as-is: the options with prices, the recommendation and why, and a clear next step. Plain text, no markdown.",
+    },
+  },
+};
+
+export async function draftQuoteRecommendation(
+  inquiry: InquiryInput,
+  comparison: QuoteComparison,
+): Promise<QuoteRecommendation | null> {
+  const call = await structuredCall({
+    system: `You draft the message a relocation concierge (SettleSide) sends a customer after collecting quotes.
+
+Rules:
+- Recommend exactly one option and say plainly why, weighing it against the customer's stated priority (cheapest, fastest, least hassle, or best quality). If they stated no priority, weigh value for money.
+- Present every quote with its price so the customer can see the comparison, not just your pick.
+- Be honest about trade-offs: if the cheapest excludes something important, say so.
+- Never invent prices, terms, or providers beyond the quotes given.
+- Address the customer by first name if it is known. Warm, direct, and concise - no marketing language, no markdown, no bullet symbols other than plain dashes.
+- End with one clear next step and an offer to proceed with booking.
+- Sign off from SettleSide.`,
+    user: JSON.stringify({ moveRequest: inquiry, quotes: comparison }, null, 2),
+    schema: RECOMMENDATION_OUTPUT_SCHEMA,
+    maxTokens: 3072,
+  });
+
+  if (!call.ok) {
+    if (call.reason !== "not-configured") {
+      console.error("SettleSide AI recommendation failed:", call.reason, call.message);
+    }
+    return null;
+  }
+
+  try {
+    return quoteRecommendationSchema.parse(JSON.parse(call.text));
+  } catch (error) {
+    if (error instanceof ZodError || error instanceof SyntaxError) {
+      console.error("SettleSide AI recommendation produced an unexpected shape:", error);
+      return null;
+    }
     throw error;
   }
 }

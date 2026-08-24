@@ -416,11 +416,62 @@ export type MarketplaceSnapshot = {
   connectors: ProviderConnector[];
 };
 
+/* ---------- Move desk: operator-side AI ---------- */
+
+export const providerBriefSchema = z.object({
+  category: z.string().trim().min(2).max(120),
+  subject: z.string().trim().min(3).max(200),
+  message: z.string().trim().min(20).max(3000),
+});
+
+export const providerBriefsSchema = z.object({
+  briefs: z.array(providerBriefSchema).min(1).max(10),
+});
+
+export type ProviderBrief = z.infer<typeof providerBriefSchema>;
+
+export const normalizedQuoteSchema = z.object({
+  provider: z.string().trim().max(160).catch("Unknown provider"),
+  category: z.string().trim().max(120).catch(""),
+  price: z.string().trim().max(120).catch("Not stated"),
+  leadTime: z.string().trim().max(120).catch(""),
+  includes: z.array(z.string().trim().max(200)).max(15).catch([]),
+  excludes: z.array(z.string().trim().max(200)).max(15).catch([]),
+  insurance: z.string().trim().max(200).catch(""),
+  validity: z.string().trim().max(120).catch(""),
+  concerns: z.string().trim().max(400).catch(""),
+});
+
+export const quoteComparisonSchema = z.object({
+  quotes: z.array(normalizedQuoteSchema).max(15),
+  comparisonNotes: z.string().trim().max(800).catch("").default(""),
+});
+
+export type NormalizedQuote = z.infer<typeof normalizedQuoteSchema>;
+export type QuoteComparison = z.infer<typeof quoteComparisonSchema>;
+
+export const quoteRecommendationSchema = z.object({
+  pick: z.string().trim().max(160),
+  reasoning: z.string().trim().max(800),
+  customerMessage: z.string().trim().min(20).max(3000),
+});
+
+export type QuoteRecommendation = z.infer<typeof quoteRecommendationSchema>;
+
+export const moveDeskRequestSchema = z.object({
+  id: z.string().trim().min(3).max(120),
+  action: z.enum(["briefs", "quotes", "recommendation"]),
+  rawQuotes: z.string().trim().max(20000).optional(),
+});
+
 export type InquiryRecord = InquirySubmissionResult & {
   inquiry: InquiryInput;
   source: "website";
   adminSummary?: InquiryAdminSummary;
   matchInsights?: InquiryMatchInsights;
+  briefs?: ProviderBrief[];
+  quoteComparison?: QuoteComparison;
+  recommendation?: QuoteRecommendation;
 };
 
 export type AdminCatalogSnapshot = {

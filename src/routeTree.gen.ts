@@ -22,6 +22,7 @@ import { Route as ApiAdminSupplierDraftRouteImport } from './routes/api/admin/su
 import { Route as ApiAdminSupplierRouteImport } from './routes/api/admin/supplier'
 import { Route as ApiAdminSnapshotRouteImport } from './routes/api/admin/snapshot'
 import { Route as ApiAdminProvidersRouteImport } from './routes/api/admin/providers'
+import { Route as ApiAdminMoveDeskRouteImport } from './routes/api/admin/move-desk'
 import { Route as ApiAdminLoginRouteImport } from './routes/api/admin/login'
 import { Route as ApiAdminInquiryIntelligenceRouteImport } from './routes/api/admin/inquiry-intelligence'
 import { Route as ApiAdminCatalogMapRouteImport } from './routes/api/admin/catalog-map'
@@ -93,6 +94,11 @@ const ApiAdminProvidersRoute = ApiAdminProvidersRouteImport.update({
   path: '/api/admin/providers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminMoveDeskRoute = ApiAdminMoveDeskRouteImport.update({
+  id: '/api/admin/move-desk',
+  path: '/api/admin/move-desk',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminLoginRoute = ApiAdminLoginRouteImport.update({
   id: '/api/admin/login',
   path: '/api/admin/login',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/catalog-map': typeof ApiAdminCatalogMapRoute
   '/api/admin/inquiry-intelligence': typeof ApiAdminInquiryIntelligenceRoute
   '/api/admin/login': typeof ApiAdminLoginRoute
+  '/api/admin/move-desk': typeof ApiAdminMoveDeskRoute
   '/api/admin/providers': typeof ApiAdminProvidersRoute
   '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
   '/api/admin/supplier': typeof ApiAdminSupplierRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/api/admin/catalog-map': typeof ApiAdminCatalogMapRoute
   '/api/admin/inquiry-intelligence': typeof ApiAdminInquiryIntelligenceRoute
   '/api/admin/login': typeof ApiAdminLoginRoute
+  '/api/admin/move-desk': typeof ApiAdminMoveDeskRoute
   '/api/admin/providers': typeof ApiAdminProvidersRoute
   '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
   '/api/admin/supplier': typeof ApiAdminSupplierRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/api/admin/catalog-map': typeof ApiAdminCatalogMapRoute
   '/api/admin/inquiry-intelligence': typeof ApiAdminInquiryIntelligenceRoute
   '/api/admin/login': typeof ApiAdminLoginRoute
+  '/api/admin/move-desk': typeof ApiAdminMoveDeskRoute
   '/api/admin/providers': typeof ApiAdminProvidersRoute
   '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
   '/api/admin/supplier': typeof ApiAdminSupplierRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/api/admin/catalog-map'
     | '/api/admin/inquiry-intelligence'
     | '/api/admin/login'
+    | '/api/admin/move-desk'
     | '/api/admin/providers'
     | '/api/admin/snapshot'
     | '/api/admin/supplier'
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/api/admin/catalog-map'
     | '/api/admin/inquiry-intelligence'
     | '/api/admin/login'
+    | '/api/admin/move-desk'
     | '/api/admin/providers'
     | '/api/admin/snapshot'
     | '/api/admin/supplier'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/api/admin/catalog-map'
     | '/api/admin/inquiry-intelligence'
     | '/api/admin/login'
+    | '/api/admin/move-desk'
     | '/api/admin/providers'
     | '/api/admin/snapshot'
     | '/api/admin/supplier'
@@ -259,6 +271,7 @@ export interface RootRouteChildren {
   ApiAdminCatalogMapRoute: typeof ApiAdminCatalogMapRoute
   ApiAdminInquiryIntelligenceRoute: typeof ApiAdminInquiryIntelligenceRoute
   ApiAdminLoginRoute: typeof ApiAdminLoginRoute
+  ApiAdminMoveDeskRoute: typeof ApiAdminMoveDeskRoute
   ApiAdminProvidersRoute: typeof ApiAdminProvidersRoute
   ApiAdminSnapshotRoute: typeof ApiAdminSnapshotRoute
   ApiAdminSupplierRoute: typeof ApiAdminSupplierRoute
@@ -358,6 +371,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminProvidersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/move-desk': {
+      id: '/api/admin/move-desk'
+      path: '/api/admin/move-desk'
+      fullPath: '/api/admin/move-desk'
+      preLoaderRoute: typeof ApiAdminMoveDeskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/login': {
       id: '/api/admin/login'
       path: '/api/admin/login'
@@ -411,6 +431,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminCatalogMapRoute: ApiAdminCatalogMapRoute,
   ApiAdminInquiryIntelligenceRoute: ApiAdminInquiryIntelligenceRoute,
   ApiAdminLoginRoute: ApiAdminLoginRoute,
+  ApiAdminMoveDeskRoute: ApiAdminMoveDeskRoute,
   ApiAdminProvidersRoute: ApiAdminProvidersRoute,
   ApiAdminSnapshotRoute: ApiAdminSnapshotRoute,
   ApiAdminSupplierRoute: ApiAdminSupplierRoute,
