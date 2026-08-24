@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -63,6 +63,7 @@ import type {
   MarketplaceProduct,
   MarketplaceService,
   MoveIntakeDraft,
+  MovePlanTask,
 } from "@/lib/settleside.schemas";
 
 export const Route = createFileRoute("/")({
@@ -905,6 +906,175 @@ function AiIntakeAssist({ onDraft }: { onDraft: (draft: MoveIntakeDraft) => void
   );
 }
 
+const OWNER_TONE: Record<MovePlanTask["owner"], string> = {
+  SettleSide: "bg-teal/10 text-teal",
+  Customer: "bg-terracotta-soft text-terracotta",
+  Provider: "bg-[oklch(0.93_0.03_150)] text-[oklch(0.42_0.05_155)]",
+};
+
+function MovePlanResult({
+  submission,
+  onReset,
+}: {
+  submission: InquirySubmissionResult | null;
+  onReset: () => void;
+}) {
+  if (!submission) {
+    return (
+      <Card className="mx-auto max-w-2xl p-8 text-center sm:p-12">
+        <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-teal/15 text-teal">
+          <CheckCircle2 className="h-7 w-7" />
+        </div>
+        <h3 className="mt-6 font-serif text-2xl text-foreground">Your move request is in.</h3>
+        <p className="mt-3 text-muted-foreground">We'll be in touch shortly.</p>
+        <Button variant="outline" className="mt-8 rounded-full" onClick={onReset}>
+          Plan another move
+        </Button>
+      </Card>
+    );
+  }
+
+  const { plan, matchedServices, matchedProducts } = submission;
+
+  return (
+    <div className="mx-auto max-w-3xl">
+      <Card className="p-6 sm:p-10">
+        <div className="flex items-start gap-4">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-teal/15 text-teal">
+            <CheckCircle2 className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="font-serif text-2xl text-foreground sm:text-3xl">
+              Your move plan is ready.
+            </h3>
+            <p className="mt-2 text-muted-foreground">{plan.summary}</p>
+          </div>
+        </div>
+
+        {/* Timeline */}
+        <div className="mt-8">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <ListChecks className="h-4 w-4 text-teal" />
+            Your timeline · {plan.tasks.length} steps
+          </div>
+          <ol className="mt-4 space-y-3">
+            {plan.tasks.map((task, index) => (
+              <li
+                key={`${task.title}-${task.timing}`}
+                className="flex gap-4 rounded-xl bg-sand p-4"
+              >
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-background text-xs font-semibold text-teal hairline">
+                  {index + 1}
+                </span>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-foreground">{task.title}</div>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                      <CalendarDays className="h-3 w-3" />
+                      {task.timing}
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 font-medium ${OWNER_TONE[task.owner]}`}
+                    >
+                      {task.owner === "SettleSide" ? "We handle it" : task.owner}
+                    </span>
+                    <span className="text-muted-foreground">{task.category}</span>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        {/* Matched services */}
+        {matchedServices.length > 0 && (
+          <div className="mt-8">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <ShieldCheck className="h-4 w-4 text-teal" />
+              Vetted providers matched to your move
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {matchedServices.map((service) => {
+                const ServiceIcon = SERVICE_ICONS[service.icon];
+                return (
+                  <div key={service.id} className="rounded-xl border border-border p-4">
+                    <div className="flex items-center gap-2">
+                      <ServiceIcon className="h-4 w-4 text-teal" />
+                      <span className="font-serif text-base text-foreground">
+                        {service.category}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                      {service.body}
+                    </p>
+                    <div className="mt-2 text-xs font-medium text-muted-foreground">
+                      {service.providers} · {service.leadTime}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Matched products */}
+        {matchedProducts.length > 0 && (
+          <div className="mt-6">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <ShoppingBag className="h-4 w-4 text-teal" />
+              Home essentials for your new place
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {matchedProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border p-4"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-foreground">
+                      {product.name}
+                    </div>
+                    <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                      {product.retailer} · {product.deliveryWindow}
+                    </div>
+                  </div>
+                  <span className="shrink-0 font-serif text-sm text-foreground">
+                    {product.price}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Concierge next step */}
+        <div className="mt-8 rounded-2xl border border-teal/30 bg-teal/5 p-5 sm:p-6">
+          <h4 className="font-serif text-lg text-foreground">Want us to run this for you?</h4>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            The plan above is yours to keep and use. If you'd rather not chase fifteen providers
+            while starting a new job, SettleSide can take it from here: we collect comparable
+            quotes, book everything, and coordinate through move-in day, with one person as your
+            single point of contact.
+          </p>
+          <p className="mt-3 text-sm font-medium text-foreground">
+            We'll reach out within one business day with options and pricing.
+          </p>
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
+          <div className="text-xs text-muted-foreground">
+            Reference <span className="font-mono text-foreground">{submission.id}</span> · a copy is
+            on its way to your inbox
+          </div>
+          <Button variant="outline" className="rounded-full" onClick={onReset}>
+            Plan another move
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 function InquiryForm() {
   const submitInquiryFn = useServerFn(submitInquiry);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -960,47 +1130,14 @@ function InquiryForm() {
 
   if (submitted) {
     return (
-      <Card className="mx-auto max-w-2xl p-8 text-center sm:p-12">
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-teal/15 text-teal">
-          <CheckCircle2 className="h-7 w-7" />
-        </div>
-        <h3 className="mt-6 font-serif text-2xl text-foreground sm:text-3xl">
-          Thanks, your move request has been received.
-        </h3>
-        <p className="mt-3 text-muted-foreground">
-          We'll build your move plan and reach out shortly with your tailored catalog.
-        </p>
-        {submission && (
-          <div className="mt-6 rounded-xl bg-sand p-4 text-left">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Request ID
-            </div>
-            <div className="mt-1 font-mono text-sm text-foreground">{submission.id}</div>
-            <div className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              First plan steps
-            </div>
-            <ul className="mt-2 space-y-2 text-sm text-foreground">
-              {submission.plan.tasks.slice(0, 3).map((task) => (
-                <li key={`${task.title}-${task.timing}`} className="flex gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-teal" />
-                  <span>{task.title}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        <Button
-          variant="outline"
-          className="mt-8 rounded-full"
-          onClick={() => {
-            setForm(EMPTY_FORM);
-            setSubmitted(false);
-            setSubmission(null);
-          }}
-        >
-          Submit another request
-        </Button>
-      </Card>
+      <MovePlanResult
+        submission={submission}
+        onReset={() => {
+          setForm(EMPTY_FORM);
+          setSubmitted(false);
+          setSubmission(null);
+        }}
+      />
     );
   }
 
@@ -1256,6 +1393,14 @@ function Footer() {
           </span>
         </div>
         <div className="mt-8 border-t border-border pt-6">
+          <div className="mb-4 flex flex-wrap gap-x-6 gap-y-2 text-xs">
+            <Link to="/privacy" className="text-muted-foreground hover:text-foreground">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="text-muted-foreground hover:text-foreground">
+              Terms of Service
+            </Link>
+          </div>
           <p className="text-xs leading-relaxed text-muted-foreground">
             SettleSide is a relocation assistant connecting users with retailers and service
             providers via official APIs and partnerships. We are not a moving company, real estate

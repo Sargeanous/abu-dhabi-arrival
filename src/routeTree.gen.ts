@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiServicesRouteImport } from './routes/api/services'
@@ -26,6 +28,16 @@ import { Route as ApiAdminCatalogMapRouteImport } from './routes/api/admin/catal
 import { Route as ApiAdminCatalogImportRouteImport } from './routes/api/admin/catalog-import'
 import { Route as ApiAdminCatalogRouteImport } from './routes/api/admin/catalog'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -111,6 +123,8 @@ const ApiAdminCatalogRoute = ApiAdminCatalogRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api/catalog': typeof ApiCatalogRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inquiries': typeof ApiInquiriesRoute
@@ -129,6 +143,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api/catalog': typeof ApiCatalogRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inquiries': typeof ApiInquiriesRoute
@@ -148,6 +164,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api/catalog': typeof ApiCatalogRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inquiries': typeof ApiInquiriesRoute
@@ -168,6 +186,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/privacy'
+    | '/terms'
     | '/api/catalog'
     | '/api/health'
     | '/api/inquiries'
@@ -186,6 +206,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/privacy'
+    | '/terms'
     | '/api/catalog'
     | '/api/health'
     | '/api/inquiries'
@@ -204,6 +226,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/privacy'
+    | '/terms'
     | '/api/catalog'
     | '/api/health'
     | '/api/inquiries'
@@ -223,6 +247,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   ApiCatalogRoute: typeof ApiCatalogRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInquiriesRoute: typeof ApiInquiriesRoute
@@ -241,6 +267,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -359,6 +399,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   ApiCatalogRoute: ApiCatalogRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiInquiriesRoute: ApiInquiriesRoute,

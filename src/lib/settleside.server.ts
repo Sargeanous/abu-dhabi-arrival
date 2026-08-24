@@ -2,7 +2,7 @@ import "@tanstack/react-start/server-only";
 
 import { generateMoveIntelligence, mapCatalogCsvColumns } from "./settleside.ai";
 import { rankCatalogItems, toMatchInsight } from "./settleside.matching";
-import { sendInquiryNotification } from "./settleside.notify";
+import { sendCustomerConfirmation, sendInquiryNotification } from "./settleside.notify";
 import {
   CATALOG_CSV_FIELDS,
   catalogCsvImportSchema,
@@ -624,8 +624,9 @@ export async function createInquiry(input: InquiryInput) {
   records.unshift(record);
   await writeInquiries(records);
 
+  // Notifications are best-effort: an inquiry must never fail because mail did.
   try {
-    await sendInquiryNotification(record);
+    await Promise.all([sendInquiryNotification(record), sendCustomerConfirmation(record)]);
   } catch (error) {
     console.error("SettleSide inquiry notification error:", error);
   }
