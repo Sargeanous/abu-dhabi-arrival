@@ -44,8 +44,14 @@ export const Route = createFileRoute("/api/inbound/quotes")({
           return jsonError("Invalid inbound secret.", 401);
         }
 
+        let body: unknown;
         try {
-          const body = await request.json();
+          body = await request.json();
+        } catch {
+          return jsonError("Body must be valid JSON.", 400);
+        }
+
+        try {
           const parsed = inboundQuoteSchema.parse(body);
           const inquiryId = parsed.inquiryId || inquiryIdFromAddress(parsed.to ?? "");
 
