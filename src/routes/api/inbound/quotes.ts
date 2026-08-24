@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { fetchEmailBody } from "@/lib/settleside.notify";
+import { fetchEmailBody, htmlToText } from "@/lib/settleside.notify";
 import { ingestInboundQuote } from "@/lib/settleside.server";
 
 /**
@@ -43,7 +43,31 @@ async function normalizePayload(body: Record<string, unknown>): Promise<Normaliz
     ];
 
     const inquiryId = recipients.map(inquiryIdFromAddress).find(Boolean) ?? "";
-    const text = typeof data.email_id === "string" ? await fetchEmailBody(data.email_id) : "";
+
+    // Resend inlines the body on some plans and sends metadata only on others,
+    // so read it from the payload first and only call back for it when absent.
+    const inline = ["text", "plain", "body", "stripped_text"]
+      .map((key) => (typeof data[key] === "string" ? (data[key] as string) : ""))
+      .find((value) => value.trim());
+
+    let text = inline ?? "";
+    if (!text.trim() && typeof data.html === "string" && data.html.trim()) {
+      text = htmlToText(data.html);
+    }
+    if (!text.trim() && typeof data.email_id === "string") {
+      text = await fetchEmailBody(data.email_id);
+    }
+
+    if (!text.trim()) {
+      // Log the shape (keys only - the values carry customer data) so an
+      // unexpected payload is diagnosable without another deploy.
+      console.error(
+        "SettleSide inbound payload had no body. data keys:",
+        Object.keys(data).join(","),
+        "| email_id:",
+        typeof data.email_id === "string" ? data.email_id : "(none)",
+      );
+    }
 
     return {
       inquiryId,

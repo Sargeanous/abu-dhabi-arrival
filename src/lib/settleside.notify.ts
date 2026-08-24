@@ -64,45 +64,64 @@ async function sendEmail(payload: {
 
 /* ---------- Automated pipeline mail ---------- */
 
+// Crude tag strip is enough: the AI reads prose, not markup.
+export function htmlToText(html: string) {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|tr|li|h[1-6])>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n\s*\n\s*\n+/g, "\n\n")
+    .trim();
+}
+
 /**
- * Resend's email.received webhook carries metadata only, so the body is
- * fetched separately. Needs an API key with read access - a send-only
- * restricted key returns 401 here.
+ * Fetches a received email's body when the webhook did not inline it.
+ *
+ * `GET /emails/{id}` only serves mail we *sent* - it 404s on an inbound id -
+ * so the inbound-specific paths are tried too. Needs an API key with read
+ * access; a send-only restricted key returns 401 here.
  */
 export async function fetchEmailBody(emailId: string) {
   if (!process.env.RESEND_API_KEY) return "";
 
-  const response = await fetch(`https://api.resend.com/emails/${emailId}`, {
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-  });
+  const paths = [
+    `https://api.resend.com/emails/receiving/${emailId}`,
+    `https://api.resend.com/emails/inbound/${emailId}`,
+    `https://api.resend.com/emails/${emailId}`,
+  ];
 
-  if (!response.ok) {
-    console.error(
-      "SettleSide could not fetch inbound email body:",
-      response.status,
-      (await response.text()).slice(0, 200),
-    );
-    return "";
+  const failures: string[] = [];
+
+  for (const path of paths) {
+    let response: Response;
+    try {
+      response = await fetch(path, {
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      });
+    } catch (error) {
+      failures.push(`${path} threw ${String(error)}`);
+      continue;
+    }
+
+    if (!response.ok) {
+      failures.push(`${path} -> ${response.status}`);
+      continue;
+    }
+
+    const email = (await response.json()) as { text?: string | null; html?: string | null };
+    if (email.text?.trim()) return email.text;
+    if (email.html?.trim()) return htmlToText(email.html);
+    failures.push(`${path} -> 200 but no body`);
   }
 
-  const email = (await response.json()) as { text?: string | null; html?: string | null };
-  if (email.text) return email.text;
-  if (email.html) {
-    // Crude tag strip is enough: the AI reads prose, not markup.
-    return email.html
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<\/(p|div|tr|li|h[1-6])>/gi, "\n")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/g, " ")
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/[ \t]+/g, " ")
-      .replace(/\n\s*\n\s*\n+/g, "\n\n")
-      .trim();
-  }
+  console.error("SettleSide could not fetch inbound email body:", failures.join(" | "));
   return "";
 }
 
