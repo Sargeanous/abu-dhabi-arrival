@@ -1,22 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ZodError } from "zod";
 
-import { inboundQuoteSchema } from "@/lib/settleside.schemas";
+import { fetchEmailBody } from "@/lib/settleside.notify";
 import { ingestInboundQuote } from "@/lib/settleside.server";
 
 /**
  * Receives a provider's emailed quote and runs the rest of the pipeline
  * automatically: normalise, compare, redraft the customer reply, notify.
  *
- * Provider-agnostic on purpose - point any inbound email service
- * (Cloudflare Email Workers, Mailgun/Postmark inbound routes, a mailbox
- * poller) at this endpoint with a JSON body:
- *   { "to": "quotes+ss-2026...@settleside.com", "from": "...", "subject": "...", "text": "..." }
- * Either `to` (carrying the inquiry id after the +) or an explicit
- * `inquiryId` identifies the move.
+ * Accepts two shapes:
  *
- * Protected by a shared secret so the endpoint cannot be used to inject
- * quotes: send it as `x-settleside-secret` (or `?secret=`).
+ * 1. Resend's `email.received` webhook. It carries metadata only, so the body
+ *    is fetched with `GET /emails/{id}` (needs an API key with read access -
+ *    a send-only key cannot do this).
+ * 2. A plain `{ to | inquiryId, from, subject, text }` body, so any other
+ *    inbound service or a manual forward works too.
+ *
+ * The move is identified by the `+` part of the recipient address
+ * (quotes+ss-2026...@settleside.com) or an explicit `inquiryId`.
+ *
+ * Protected by a shared secret - send `x-settleside-secret`, or append
+ * `?secret=` to the webhook URL where the provider cannot set headers.
  */
 function jsonError(message: string, status = 400) {
   return Response.json({ error: message }, { status });
@@ -26,6 +29,41 @@ function inquiryIdFromAddress(address: string) {
   // quotes+ss-20260824-abc123@settleside.com -> ss-20260824-abc123
   const match = address.match(/\+([^@\s>]+)@/);
   return match ? match[1] : "";
+}
+
+type Normalized = { inquiryId: string; from: string; subject: string; text: string };
+
+async function normalizePayload(body: Record<string, unknown>): Promise<Normalized | null> {
+  // Resend: { type: "email.received", data: { email_id, from, to[], subject, ... } }
+  if (body.type === "email.received" && body.data && typeof body.data === "object") {
+    const data = body.data as Record<string, unknown>;
+    const recipients = [
+      ...(Array.isArray(data.to) ? (data.to as string[]) : []),
+      ...(Array.isArray(data.received_for) ? (data.received_for as string[]) : []),
+    ];
+
+    const inquiryId = recipients.map(inquiryIdFromAddress).find(Boolean) ?? "";
+    const text = typeof data.email_id === "string" ? await fetchEmailBody(data.email_id) : "";
+
+    return {
+      inquiryId,
+      from: typeof data.from === "string" ? data.from : "",
+      subject: typeof data.subject === "string" ? data.subject : "",
+      text,
+    };
+  }
+
+  // Any other inbound service, or a manual forward.
+  const text = typeof body.text === "string" ? body.text : "";
+  const to = typeof body.to === "string" ? body.to : "";
+  const explicit = typeof body.inquiryId === "string" ? body.inquiryId : "";
+
+  return {
+    inquiryId: explicit || inquiryIdFromAddress(to),
+    from: typeof body.from === "string" ? body.from : "",
+    subject: typeof body.subject === "string" ? body.subject : "",
+    text,
+  };
 }
 
 export const Route = createFileRoute("/api/inbound/quotes")({
@@ -44,30 +82,30 @@ export const Route = createFileRoute("/api/inbound/quotes")({
           return jsonError("Invalid inbound secret.", 401);
         }
 
-        let body: unknown;
+        let body: Record<string, unknown>;
         try {
-          body = await request.json();
+          body = (await request.json()) as Record<string, unknown>;
         } catch {
           return jsonError("Body must be valid JSON.", 400);
         }
 
         try {
-          const parsed = inboundQuoteSchema.parse(body);
-          const inquiryId = parsed.inquiryId || inquiryIdFromAddress(parsed.to ?? "");
+          const payload = await normalizePayload(body);
 
-          if (!inquiryId) {
+          if (!payload?.inquiryId) {
             return jsonError("Could not determine which move this quote belongs to.", 422);
           }
 
-          const result = await ingestInboundQuote({
-            inquiryId,
-            from: parsed.from,
-            subject: parsed.subject,
-            text: parsed.text,
-          });
+          if (!payload.text.trim()) {
+            // Nothing to read: acknowledge so the sender does not retry forever.
+            console.error("SettleSide inbound quote had no readable body:", payload.inquiryId);
+            return Response.json({ ok: false, reason: "empty-body", id: payload.inquiryId });
+          }
+
+          const result = await ingestInboundQuote(payload);
 
           if (!result.ok) {
-            return jsonError(`Inquiry "${inquiryId}" was not found.`, 404);
+            return jsonError(`Inquiry "${payload.inquiryId}" was not found.`, 404);
           }
 
           return Response.json({
@@ -77,10 +115,6 @@ export const Route = createFileRoute("/api/inbound/quotes")({
             quotes: result.inquiry.quoteComparison?.quotes.length ?? 0,
           });
         } catch (error) {
-          if (error instanceof ZodError) {
-            return jsonError(error.issues[0]?.message ?? "Invalid inbound payload.");
-          }
-
           console.error(error);
           return jsonError("Unable to ingest that quote right now.", 500);
         }

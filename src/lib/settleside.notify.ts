@@ -64,6 +64,48 @@ async function sendEmail(payload: {
 
 /* ---------- Automated pipeline mail ---------- */
 
+/**
+ * Resend's email.received webhook carries metadata only, so the body is
+ * fetched separately. Needs an API key with read access - a send-only
+ * restricted key returns 401 here.
+ */
+export async function fetchEmailBody(emailId: string) {
+  if (!process.env.RESEND_API_KEY) return "";
+
+  const response = await fetch(`https://api.resend.com/emails/${emailId}`, {
+    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+  });
+
+  if (!response.ok) {
+    console.error(
+      "SettleSide could not fetch inbound email body:",
+      response.status,
+      (await response.text()).slice(0, 200),
+    );
+    return "";
+  }
+
+  const email = (await response.json()) as { text?: string | null; html?: string | null };
+  if (email.text) return email.text;
+  if (email.html) {
+    // Crude tag strip is enough: the AI reads prose, not markup.
+    return email.html
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|tr|li|h[1-6])>/gi, "\n")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/[ \t]+/g, " ")
+      .replace(/\n\s*\n\s*\n+/g, "\n\n")
+      .trim();
+  }
+  return "";
+}
+
 // Providers reply to a per-inquiry address so replies route back automatically.
 export function quotesReplyAddress(inquiryId: string) {
   const domain = (process.env.SETTLESIDE_QUOTES_DOMAIN ?? "").trim();
