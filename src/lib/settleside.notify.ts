@@ -33,6 +33,7 @@ async function sendEmail(payload: {
   subject: string;
   html: string;
   label: string;
+  replyTo?: string;
 }) {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -45,6 +46,7 @@ async function sendEmail(payload: {
       to: [payload.to],
       subject: payload.subject,
       html: payload.html,
+      ...(payload.replyTo ? { reply_to: payload.replyTo } : {}),
     }),
   });
 
@@ -58,6 +60,111 @@ async function sendEmail(payload: {
   }
 
   return true;
+}
+
+/* ---------- Automated pipeline mail ---------- */
+
+// Providers reply to a per-inquiry address so replies route back automatically.
+export function quotesReplyAddress(inquiryId: string) {
+  const domain = (process.env.SETTLESIDE_QUOTES_DOMAIN ?? "").trim();
+  if (!domain) return "";
+  return `quotes+${inquiryId}@${domain}`;
+}
+
+function textToHtml(text: string) {
+  return escapeHtml(text).replaceAll("\n", "<br/>");
+}
+
+export async function sendProviderBrief(options: {
+  to: string;
+  providerName: string;
+  subject: string;
+  message: string;
+  inquiryId: string;
+}) {
+  if (!isCustomerMailConfigured()) return false;
+
+  const replyTo = quotesReplyAddress(options.inquiryId);
+  const html = `
+<div style="font-family:system-ui,-apple-system,sans-serif;max-width:600px;color:#1a1a1a;font-size:14px;line-height:1.6;">
+  ${textToHtml(options.message)}
+  ${
+    replyTo
+      ? `<p style="margin:20px 0 0;font-size:12px;color:#888;">Reply to this email with your quote and it will reach the file for this move directly.</p>`
+      : ""
+  }
+</div>`;
+
+  return sendEmail({
+    from: process.env.SETTLESIDE_NOTIFY_FROM as string,
+    to: options.to,
+    subject: options.subject,
+    html,
+    label: "provider brief",
+    replyTo: replyTo || undefined,
+  });
+}
+
+export async function sendReviewReady(record: InquiryRecord) {
+  if (!isNotifyConfigured()) return false;
+
+  const quotes = record.quoteComparison?.quotes ?? [];
+  const rows = quotes
+    .map(
+      (quote) =>
+        `<tr><td style="padding:4px 12px 4px 0;">${escapeHtml(quote.provider)}</td><td style="padding:4px 0;"><strong>${escapeHtml(quote.price)}</strong></td></tr>`,
+    )
+    .join("");
+
+  const html = `
+<div style="font-family:system-ui,-apple-system,sans-serif;max-width:600px;color:#1a1a1a;">
+  <h2 style="margin:0 0 6px;font-size:20px;">Quotes are in and the reply is drafted</h2>
+  <p style="margin:0 0 16px;color:#666;">
+    ${escapeHtml(record.inquiry.name)} &middot; ${escapeHtml(record.inquiry.origin || "Unknown")} to ${escapeHtml(record.inquiry.destination)} &middot; ${escapeHtml(record.id)}
+  </p>
+  <table style="border-collapse:collapse;font-size:14px;margin-bottom:16px;">${rows}</table>
+  ${
+    record.recommendation
+      ? `<p style="margin:0 0 8px;"><strong>Recommended: ${escapeHtml(record.recommendation.pick)}</strong></p>
+         <p style="margin:0 0 16px;color:#444;font-size:14px;">${escapeHtml(record.recommendation.reasoning)}</p>
+         <div style="padding:14px;background:#f7f7f5;border-left:3px solid #1a7f7f;font-size:13px;line-height:1.6;">
+           ${textToHtml(record.recommendation.customerMessage)}
+         </div>`
+      : ""
+  }
+  <p style="margin:20px 0 0;font-size:14px;">
+    Open the move desk in the admin console to approve and send it.
+  </p>
+</div>`;
+
+  return sendEmail({
+    from: process.env.SETTLESIDE_NOTIFY_FROM || "SettleSide <onboarding@resend.dev>",
+    to: process.env.SETTLESIDE_NOTIFY_EMAIL as string,
+    subject: `Ready to send: ${record.inquiry.name} — ${quotes.length} quote(s) in`,
+    html,
+    label: "review ready",
+  });
+}
+
+export async function sendCustomerReply(record: InquiryRecord) {
+  if (!isCustomerMailConfigured()) return false;
+  if (!record.recommendation || !record.inquiry.email) return false;
+
+  const html = `
+<div style="font-family:system-ui,-apple-system,sans-serif;max-width:600px;color:#1a1a1a;font-size:14px;line-height:1.6;">
+  ${textToHtml(record.recommendation.customerMessage)}
+  <p style="margin:24px 0 0;font-size:12px;color:#888;">
+    Reference ${escapeHtml(record.id)} &middot; SettleSide &middot; settleside.com
+  </p>
+</div>`;
+
+  return sendEmail({
+    from: process.env.SETTLESIDE_NOTIFY_FROM as string,
+    to: record.inquiry.email,
+    subject: `Your quotes for ${record.inquiry.destination}`,
+    html,
+    label: "customer reply",
+  });
 }
 
 export async function sendCustomerConfirmation(record: InquiryRecord) {

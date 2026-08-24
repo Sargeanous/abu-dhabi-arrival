@@ -6,6 +6,7 @@ import {
   LogOut,
   RefreshCw,
   Save,
+  Send,
   Sparkles,
   Store,
   Trash2,
@@ -115,6 +116,15 @@ const URGENCY_VARIANT: Record<
   low: "secondary",
 };
 
+const STAGE_LABELS: Record<string, string> = {
+  new: "new",
+  briefed: "briefs ready",
+  dispatched: "awaiting quotes",
+  quoting: "quotes arriving",
+  ready: "READY TO SEND",
+  sent: "reply sent",
+};
+
 function authHeaders(token: string) {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
@@ -206,7 +216,10 @@ function MoveDesk({
 }: {
   inquiry: InquiryRecord;
   busy: string | null;
-  onRun: (action: "briefs" | "quotes" | "recommendation", rawQuotes?: string) => void;
+  onRun: (
+    action: "briefs" | "quotes" | "recommendation" | "dispatch" | "send-reply",
+    rawQuotes?: string,
+  ) => void;
 }) {
   const [rawQuotes, setRawQuotes] = useState("");
   const comparison = inquiry.quoteComparison;
@@ -224,17 +237,34 @@ function MoveDesk({
           <span className="text-sm font-medium text-foreground">
             1. Request quotes from providers
           </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={busy !== null}
-            onClick={() => onRun("briefs")}
-          >
-            <Sparkles className="mr-2 h-3.5 w-3.5" />
-            {busy === "briefs" ? "Writing..." : inquiry.briefs ? "Rewrite briefs" : "Draft briefs"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={busy !== null}
+              onClick={() => onRun("briefs")}
+            >
+              <Sparkles className="mr-2 h-3.5 w-3.5" />
+              {busy === "briefs" ? "Writing..." : inquiry.briefs ? "Rewrite" : "Draft briefs"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={busy !== null || !inquiry.briefs?.length}
+              onClick={() => onRun("dispatch")}
+            >
+              <Send className="mr-2 h-3.5 w-3.5" />
+              {busy === "dispatch" ? "Sending..." : "Send to providers"}
+            </Button>
+          </div>
         </div>
+        {inquiry.dispatches?.length ? (
+          <p className="mb-2 text-xs text-teal">
+            Sent to {inquiry.dispatches.map((d) => d.providerName).join(", ")}
+          </p>
+        ) : null}
         {inquiry.briefs?.length ? (
           <div className="grid gap-2">
             {inquiry.briefs.map((brief) => (
@@ -346,8 +376,22 @@ function MoveDesk({
             <pre className="mt-3 whitespace-pre-wrap border-t border-teal/20 pt-3 font-sans text-xs leading-relaxed text-foreground">
               {inquiry.recommendation.customerMessage}
             </pre>
-            <div className="mt-3">
-              <CopyButton text={inquiry.recommendation.customerMessage} label="Copy reply" />
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                className="bg-teal text-primary-foreground hover:bg-teal/90"
+                disabled={busy !== null || Boolean(inquiry.replySentAt)}
+                onClick={() => onRun("send-reply")}
+              >
+                <Send className="mr-2 h-3.5 w-3.5" />
+                {inquiry.replySentAt
+                  ? "Sent to customer"
+                  : busy === "send-reply"
+                    ? "Sending..."
+                    : "Send to customer"}
+              </Button>
+              <CopyButton text={inquiry.recommendation.customerMessage} label="Copy instead" />
             </div>
           </div>
         ) : (
@@ -652,7 +696,7 @@ function AdminPage() {
 
   async function runMoveDesk(
     id: string,
-    action: "briefs" | "quotes" | "recommendation",
+    action: "briefs" | "quotes" | "recommendation" | "dispatch" | "send-reply",
     rawQuotes?: string,
   ) {
     setDeskBusy(action);
@@ -664,13 +708,14 @@ function AdminPage() {
         body: JSON.stringify({ id, action, rawQuotes }),
       });
       await readJson<{ inquiry: unknown }>(response);
-      toast.success(
-        action === "briefs"
-          ? "Provider briefs ready."
-          : action === "quotes"
-            ? "Quotes compared."
-            : "Reply drafted.",
-      );
+      const messages: Record<string, string> = {
+        briefs: "Provider briefs ready.",
+        dispatch: "Briefs emailed to providers.",
+        quotes: "Quotes compared and reply redrafted.",
+        recommendation: "Reply drafted.",
+        "send-reply": "Reply sent to the customer.",
+      };
+      toast.success(messages[action] ?? "Done.");
       await loadSnapshot();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Move desk action failed.");
@@ -1502,6 +1547,11 @@ function AdminPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="font-medium text-foreground">{inquiry.inquiry.name}</div>
                     <div className="flex flex-wrap items-center gap-1.5">
+                      {inquiry.stage && (
+                        <Badge variant={inquiry.stage === "ready" ? "default" : "outline"}>
+                          {STAGE_LABELS[inquiry.stage] ?? inquiry.stage}
+                        </Badge>
+                      )}
                       {inquiry.planSource && (
                         <Badge variant="outline">plan: {inquiry.planSource}</Badge>
                       )}

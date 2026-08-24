@@ -8,7 +8,14 @@ import {
   normalizeQuotes,
 } from "./settleside.ai";
 import { rankCatalogItems, toMatchInsight } from "./settleside.matching";
-import { sendCustomerConfirmation, sendInquiryNotification } from "./settleside.notify";
+import {
+  isCustomerMailConfigured,
+  sendCustomerConfirmation,
+  sendCustomerReply,
+  sendInquiryNotification,
+  sendProviderBrief,
+  sendReviewReady,
+} from "./settleside.notify";
 import {
   CATALOG_CSV_FIELDS,
   catalogCsvImportSchema,
@@ -20,6 +27,7 @@ import {
   providerUpsertSchema,
   supplierSaveSchema,
   type AdminCatalogSnapshot,
+  type BriefDispatch,
   type CatalogItemRecord,
   type CatalogItemUpsert,
   type CsvImportResult,
@@ -637,6 +645,12 @@ export async function createInquiry(input: InquiryInput) {
     console.error("SettleSide inquiry notification error:", error);
   }
 
+  // Write the provider briefs and send them out in the background: the customer
+  // gets their plan immediately rather than waiting on another AI round trip.
+  void autoPrepareInquiry(record.id).catch((error) =>
+    console.error("SettleSide auto-prepare error:", error),
+  );
+
   return {
     id: record.id,
     createdAt: record.createdAt,
@@ -652,9 +666,175 @@ export async function listInquiries() {
   return readInquiries();
 }
 
+/* ---------- Automated pipeline ---------- */
+
+function categoriesToQuote(record: InquiryRecord) {
+  return Array.from(
+    new Set(
+      record.inquiry.help.length > 0
+        ? record.inquiry.help.map((option) => option.replace(/\s*\(optional\)$/, ""))
+        : record.matchedServices.map((service) => service.category),
+    ),
+  );
+}
+
+async function saveInquiry(record: InquiryRecord) {
+  const records = await readInquiries();
+  const index = records.findIndex((entry) => entry.id === record.id);
+  if (index < 0) return;
+  records[index] = record;
+  await writeInquiries(records);
+}
+
+/**
+ * Emails each brief to the live providers that serve its category. Only
+ * published providers with an email address are contacted, so prospects that
+ * have not agreed terms are never cold-mailed.
+ */
+export async function dispatchBriefs(record: InquiryRecord) {
+  if (!record.briefs?.length || !isCustomerMailConfigured()) return record;
+
+  const store = await readCatalogStore();
+  const dispatches: BriefDispatch[] = [...(record.dispatches ?? [])];
+  const alreadySent = new Set(dispatches.map((d) => `${d.category}|${d.providerKey}`));
+
+  for (const brief of record.briefs) {
+    const needle = brief.category.toLowerCase();
+    const providers = store.providers.filter((provider) => {
+      if (!provider.active || !provider.contactEmail) return false;
+      const servesCategory = store.catalogItems.some(
+        (item) =>
+          item.active &&
+          item.providerKey === provider.key &&
+          item.category.toLowerCase().includes(needle.split(" ")[0]),
+      );
+      return servesCategory || provider.category.toLowerCase().includes(needle.split(" ")[0]);
+    });
+
+    for (const provider of providers.slice(0, 4)) {
+      const key = `${brief.category}|${provider.key}`;
+      if (alreadySent.has(key)) continue;
+
+      const sent = await sendProviderBrief({
+        to: provider.contactEmail,
+        providerName: provider.name,
+        subject: brief.subject,
+        message: brief.message,
+        inquiryId: record.id,
+      });
+
+      if (sent) {
+        alreadySent.add(key);
+        dispatches.push({
+          category: brief.category,
+          providerKey: provider.key,
+          providerName: provider.name,
+          to: provider.contactEmail,
+          sentAt: nowIso(),
+        });
+      }
+    }
+  }
+
+  return {
+    ...record,
+    dispatches,
+    stage: dispatches.length > 0 ? ("dispatched" as const) : record.stage,
+  };
+}
+
+/** Generates briefs and dispatches them, without blocking inquiry creation. */
+export async function autoPrepareInquiry(id: string) {
+  const records = await readInquiries();
+  const record = records.find((entry) => entry.id === id);
+  if (!record) return;
+
+  const categories = categoriesToQuote(record);
+  if (categories.length === 0) return;
+
+  const briefs = await generateProviderBriefs(record.inquiry, categories);
+  if (!briefs) return;
+
+  const withBriefs: InquiryRecord = { ...record, briefs, stage: "briefed" };
+  const dispatched = await dispatchBriefs(withBriefs);
+  await saveInquiry(dispatched);
+}
+
+/**
+ * A provider replied. Append the raw text, re-read every quote received so far,
+ * redraft the recommendation, and tell the operator it is ready to review.
+ */
+export async function ingestInboundQuote(input: {
+  inquiryId: string;
+  from: string;
+  subject: string;
+  text: string;
+}) {
+  const records = await readInquiries();
+  const index = records.findIndex((entry) => entry.id === input.inquiryId);
+  if (index < 0) return { ok: false as const, error: "not-found" as const };
+
+  const record = records[index];
+  const inboundQuotes = [
+    ...(record.inboundQuotes ?? []),
+    { from: input.from, subject: input.subject, body: input.text, receivedAt: nowIso() },
+  ];
+
+  const combined = inboundQuotes
+    .map((quote) => `From: ${quote.from}\nSubject: ${quote.subject}\n${quote.body}`)
+    .join("\n\n---\n\n");
+
+  const quoteComparison = await normalizeQuotes(record.inquiry, combined);
+  const recommendation = quoteComparison
+    ? await draftQuoteRecommendation(record.inquiry, quoteComparison)
+    : undefined;
+
+  const updated: InquiryRecord = {
+    ...record,
+    inboundQuotes,
+    quoteComparison: quoteComparison ?? record.quoteComparison,
+    recommendation: recommendation ?? undefined,
+    stage: recommendation ? "ready" : "quoting",
+  };
+
+  records[index] = updated;
+  await writeInquiries(records);
+
+  if (recommendation) {
+    try {
+      if (process.env.SETTLESIDE_AUTO_SEND_REPLY === "true") {
+        await sendCustomerReplyEmail(updated.id);
+      } else {
+        await sendReviewReady(updated);
+      }
+    } catch (error) {
+      console.error("SettleSide review notification error:", error);
+    }
+  }
+
+  return { ok: true as const, inquiry: updated };
+}
+
+export async function sendCustomerReplyEmail(id: string) {
+  const records = await readInquiries();
+  const index = records.findIndex((entry) => entry.id === id);
+  if (index < 0) return { ok: false as const, error: "not-found" as const };
+
+  const record = records[index];
+  if (!record.recommendation) return { ok: false as const, error: "no-recommendation" as const };
+
+  const sent = await sendCustomerReply(record);
+  if (!sent) return { ok: false as const, error: "mail-not-configured" as const };
+
+  const updated: InquiryRecord = { ...record, stage: "sent", replySentAt: nowIso() };
+  records[index] = updated;
+  await writeInquiries(records);
+  return { ok: true as const, inquiry: updated };
+}
+
 export async function runMoveDeskAction(input: {
   id: string;
-  action: "briefs" | "quotes" | "recommendation";
+  action: "briefs" | "quotes" | "recommendation" | "dispatch" | "send-reply";
   rawQuotes?: string;
 }) {
   const records = await readInquiries();
@@ -667,16 +847,25 @@ export async function runMoveDeskAction(input: {
   const record = records[index];
   let updated = record;
 
+  if (input.action === "send-reply") {
+    return sendCustomerReplyEmail(input.id);
+  }
+
+  if (input.action === "dispatch") {
+    if (!record.briefs?.length) return { ok: false as const, error: "no-briefs" as const };
+    const dispatched = await dispatchBriefs(record);
+    if ((dispatched.dispatches?.length ?? 0) === (record.dispatches?.length ?? 0)) {
+      return { ok: false as const, error: "no-recipients" as const };
+    }
+    records[index] = dispatched;
+    await writeInquiries(records);
+    return { ok: true as const, inquiry: dispatched };
+  }
+
   if (input.action === "briefs") {
     // Quote the categories the customer asked for; fall back to whatever the
     // matcher surfaced so a request with no help boxes ticked still works.
-    const categories = Array.from(
-      new Set(
-        record.inquiry.help.length > 0
-          ? record.inquiry.help.map((option) => option.replace(/\s*\(optional\)$/, ""))
-          : record.matchedServices.map((service) => service.category),
-      ),
-    );
+    const categories = categoriesToQuote(record);
 
     if (categories.length === 0) {
       return { ok: false as const, error: "no-categories" as const };
@@ -684,7 +873,7 @@ export async function runMoveDeskAction(input: {
 
     const briefs = await generateProviderBriefs(record.inquiry, categories);
     if (!briefs) return { ok: false as const, error: "ai-unavailable" as const };
-    updated = { ...record, briefs };
+    updated = { ...record, briefs, stage: "briefed" };
   }
 
   if (input.action === "quotes") {
@@ -695,8 +884,15 @@ export async function runMoveDeskAction(input: {
 
     const quoteComparison = await normalizeQuotes(record.inquiry, rawQuotes);
     if (!quoteComparison) return { ok: false as const, error: "ai-unavailable" as const };
-    // A fresh set of quotes invalidates any recommendation built on the old set.
-    updated = { ...record, quoteComparison, recommendation: undefined };
+    // Comparing a fresh set invalidates a recommendation built on the old one,
+    // so redraft immediately rather than leaving a stale reply in place.
+    const recommendation = await draftQuoteRecommendation(record.inquiry, quoteComparison);
+    updated = {
+      ...record,
+      quoteComparison,
+      recommendation: recommendation ?? undefined,
+      stage: recommendation ? "ready" : "quoting",
+    };
   }
 
   if (input.action === "recommendation") {
@@ -706,7 +902,7 @@ export async function runMoveDeskAction(input: {
 
     const recommendation = await draftQuoteRecommendation(record.inquiry, record.quoteComparison);
     if (!recommendation) return { ok: false as const, error: "ai-unavailable" as const };
-    updated = { ...record, recommendation };
+    updated = { ...record, recommendation, stage: "ready" };
   }
 
   records[index] = updated;

@@ -8,6 +8,16 @@ const ERROR_MESSAGES: Record<string, [string, number]> = {
   "not-found": ["That inquiry was not found.", 404],
   "no-categories": ["This inquiry has no service categories to quote.", 400],
   "no-quotes": ["Paste the provider quotes first.", 400],
+  "no-briefs": ["Draft the provider briefs first.", 400],
+  "no-recipients": [
+    "No published provider with an email address matched these categories. Publish a provider and add its email, then try again.",
+    400,
+  ],
+  "no-recommendation": ["Draft the reply before sending it.", 400],
+  "mail-not-configured": [
+    "Customer email needs a verified sending domain: set SETTLESIDE_NOTIFY_FROM to an address on a domain verified in Resend.",
+    503,
+  ],
   "ai-unavailable": ["The AI assistant is unavailable or not configured on this server.", 503],
 };
 

@@ -58,6 +58,19 @@ SettleSide uses Claude for two features (`src/lib/settleside.ai.ts`):
 - **Inquiry notifications**: set `RESEND_API_KEY` and `SETTLESIDE_NOTIFY_EMAIL` to receive an email per inquiry (with the AI urgency digest when available). `SETTLESIDE_NOTIFY_FROM` overrides the sender once a domain is verified in Resend. Unset = silently skipped; inquiry creation never fails on notification errors.
 - **Rate limits** (per IP, in-memory - suits a single long-running server): AI intake parsing 5/min and 20/hour; inquiry submission 3/min and 10/hour; admin login 5 per 5 minutes. Limits are shared between the `/api` routes and the landing page's server functions.
 
+## Automated Pipeline
+
+An inquiry moves itself along without an operator until it needs a decision. Each record carries a `stage`: `new` → `briefed` → `dispatched` → `quoting` → `ready` → `sent`.
+
+1. **Inquiry arrives** - AI plan, provider matches, admin digest, and customer confirmation, all automatic.
+2. **Briefs written** - provider request-for-quote messages are generated in the background (`autoPrepareInquiry`), so the customer never waits on them.
+3. **Briefs dispatched** - emailed to matching providers that are **published and have an email address**, so unconfirmed prospects are never cold-mailed. Each carries `Reply-To: quotes+<inquiryId>@<SETTLESIDE_QUOTES_DOMAIN>`.
+4. **Quotes ingested** - an inbound email service POSTs replies to `POST /api/inbound/quotes` (shared secret in `SETTLESIDE_INBOUND_SECRET`). The endpoint is provider-agnostic: Cloudflare Email Workers, Mailgun/Postmark inbound routes, or a mailbox poller all work. Body: `{ to | inquiryId, from, subject, text }`.
+5. **Compared and drafted** - every quote received so far is re-normalised and the customer reply is redrafted automatically.
+6. **Sent** - you get a "ready to send" email and approve with one click, or set `SETTLESIDE_AUTO_SEND_REPLY=true` to have it sent automatically.
+
+Steps 3-6 require a Resend-verified sending domain (`SETTLESIDE_NOTIFY_FROM`); without it, outbound mail is skipped rather than bounced and the pipeline stays manual through the move desk.
+
 ## Provider Matching
 
 Inquiry-to-catalog matching is deliberately **not** AI: it is a deterministic scoring model in `src/lib/settleside.matching.ts` (instant, free, explainable). Signals: requested help categories (+40), pet relevance (+30), family relevance (+20), provider integration status (up to +15), provider priority (up to +9), item rating (x2), destination city (+6), and checkout actionability (up to +4). Each inquiry record stores `matchInsights` - per-match scores and human-readable reasons - visible through `/api/admin/snapshot`.

@@ -460,8 +460,44 @@ export type QuoteRecommendation = z.infer<typeof quoteRecommendationSchema>;
 
 export const moveDeskRequestSchema = z.object({
   id: z.string().trim().min(3).max(120),
-  action: z.enum(["briefs", "quotes", "recommendation"]),
+  action: z.enum(["briefs", "quotes", "recommendation", "dispatch", "send-reply"]),
   rawQuotes: z.string().trim().max(20000).optional(),
+});
+
+// Where an inquiry sits in the automated pipeline. Advances on its own;
+// "ready" is the only stage that normally needs a human.
+export const PIPELINE_STAGES = [
+  "new",
+  "briefed",
+  "dispatched",
+  "quoting",
+  "ready",
+  "sent",
+] as const;
+export type PipelineStage = (typeof PIPELINE_STAGES)[number];
+
+export type BriefDispatch = {
+  category: string;
+  providerKey: string;
+  providerName: string;
+  to: string;
+  sentAt: string;
+};
+
+export type InboundQuote = {
+  from: string;
+  subject: string;
+  body: string;
+  receivedAt: string;
+};
+
+export const inboundQuoteSchema = z.object({
+  // Either an explicit inquiry id, or a to-address like quotes+ss-2026...@settleside.com
+  inquiryId: z.string().trim().max(120).optional(),
+  to: z.string().trim().max(320).optional(),
+  from: z.string().trim().max(320).default(""),
+  subject: z.string().trim().max(300).default(""),
+  text: z.string().trim().min(1).max(20000),
 });
 
 export type InquiryRecord = InquirySubmissionResult & {
@@ -472,6 +508,10 @@ export type InquiryRecord = InquirySubmissionResult & {
   briefs?: ProviderBrief[];
   quoteComparison?: QuoteComparison;
   recommendation?: QuoteRecommendation;
+  stage?: PipelineStage;
+  dispatches?: BriefDispatch[];
+  inboundQuotes?: InboundQuote[];
+  replySentAt?: string;
 };
 
 export type AdminCatalogSnapshot = {

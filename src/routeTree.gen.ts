@@ -18,6 +18,7 @@ import { Route as ApiIntakeRouteImport } from './routes/api/intake'
 import { Route as ApiInquiriesRouteImport } from './routes/api/inquiries'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiCatalogRouteImport } from './routes/api/catalog'
+import { Route as ApiInboundQuotesRouteImport } from './routes/api/inbound/quotes'
 import { Route as ApiAdminSupplierDraftRouteImport } from './routes/api/admin/supplier-draft'
 import { Route as ApiAdminSupplierRouteImport } from './routes/api/admin/supplier'
 import { Route as ApiAdminSnapshotRouteImport } from './routes/api/admin/snapshot'
@@ -72,6 +73,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
 const ApiCatalogRoute = ApiCatalogRouteImport.update({
   id: '/api/catalog',
   path: '/api/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiInboundQuotesRoute = ApiInboundQuotesRouteImport.update({
+  id: '/api/inbound/quotes',
+  path: '/api/inbound/quotes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminSupplierDraftRoute = ApiAdminSupplierDraftRouteImport.update({
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
   '/api/admin/supplier': typeof ApiAdminSupplierRoute
   '/api/admin/supplier-draft': typeof ApiAdminSupplierDraftRoute
+  '/api/inbound/quotes': typeof ApiInboundQuotesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
   '/api/admin/supplier': typeof ApiAdminSupplierRoute
   '/api/admin/supplier-draft': typeof ApiAdminSupplierDraftRoute
+  '/api/inbound/quotes': typeof ApiInboundQuotesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/api/admin/snapshot': typeof ApiAdminSnapshotRoute
   '/api/admin/supplier': typeof ApiAdminSupplierRoute
   '/api/admin/supplier-draft': typeof ApiAdminSupplierDraftRoute
+  '/api/inbound/quotes': typeof ApiInboundQuotesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/api/admin/snapshot'
     | '/api/admin/supplier'
     | '/api/admin/supplier-draft'
+    | '/api/inbound/quotes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/api/admin/snapshot'
     | '/api/admin/supplier'
     | '/api/admin/supplier-draft'
+    | '/api/inbound/quotes'
   id:
     | '__root__'
     | '/'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/api/admin/snapshot'
     | '/api/admin/supplier'
     | '/api/admin/supplier-draft'
+    | '/api/inbound/quotes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -276,6 +288,7 @@ export interface RootRouteChildren {
   ApiAdminSnapshotRoute: typeof ApiAdminSnapshotRoute
   ApiAdminSupplierRoute: typeof ApiAdminSupplierRoute
   ApiAdminSupplierDraftRoute: typeof ApiAdminSupplierDraftRoute
+  ApiInboundQuotesRoute: typeof ApiInboundQuotesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -341,6 +354,13 @@ declare module '@tanstack/react-router' {
       path: '/api/catalog'
       fullPath: '/api/catalog'
       preLoaderRoute: typeof ApiCatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/inbound/quotes': {
+      id: '/api/inbound/quotes'
+      path: '/api/inbound/quotes'
+      fullPath: '/api/inbound/quotes'
+      preLoaderRoute: typeof ApiInboundQuotesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/admin/supplier-draft': {
@@ -436,6 +456,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminSnapshotRoute: ApiAdminSnapshotRoute,
   ApiAdminSupplierRoute: ApiAdminSupplierRoute,
   ApiAdminSupplierDraftRoute: ApiAdminSupplierDraftRoute,
+  ApiInboundQuotesRoute: ApiInboundQuotesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
