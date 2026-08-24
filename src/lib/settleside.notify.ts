@@ -163,11 +163,44 @@ export async function sendInquiryNotification(record: InquiryRecord) {
     ${row("Name", inquiry.name)}
     ${row("Email", inquiry.email)}
     ${row("WhatsApp", inquiry.whatsapp)}
+    ${row("Prefers", inquiry.contactPreference)}
+    ${row("Best time", inquiry.bestTime)}
     ${row("Route", `${inquiry.origin || "Unknown"} to ${inquiry.destination}`)}
-    ${row("Move date", inquiry.moveDate)}
-    ${row("Household", inquiry.household)}
-    ${row("Status", inquiry.status)}
-    ${row("Pet", inquiry.pet)}
+    ${row("Area", inquiry.destinationArea)}
+    ${row("Move date", [inquiry.moveDate, inquiry.dateFlexibility].filter(Boolean).join(" · "))}
+    ${row(
+      "Property",
+      [
+        inquiry.originProperty && `from ${inquiry.originProperty}`,
+        inquiry.destinationProperty && `to ${inquiry.destinationProperty}`,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    )}
+    ${row("Access out", inquiry.originAccess)}
+    ${row("Access in", inquiry.destinationAccess)}
+    ${row("Inventory", inquiry.inventory)}
+    ${row("Special items", inquiry.specialItems)}
+    ${row("Packing", inquiry.packing)}
+    ${row("Storage", inquiry.storage)}
+    ${row(
+      "Household",
+      [
+        inquiry.household,
+        inquiry.adults && `${inquiry.adults} adult(s)`,
+        inquiry.children && `${inquiry.children} child(ren)`,
+        inquiry.childrenAges && `ages ${inquiry.childrenAges}`,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    )}
+    ${row("Pet", [inquiry.pet, inquiry.petDetails].filter((v) => v && v !== "no").join(" · "))}
+    ${row("Process", inquiry.status)}
+    ${row("Visa", inquiry.visaStatus)}
+    ${row("Housing", inquiry.leaseStatus)}
+    ${row("Employer covers", inquiry.employerSupport)}
+    ${row("Budget", inquiry.budget)}
+    ${row("Priority", inquiry.priority)}
     ${row("Help with", inquiry.help.join(", "))}
     ${row("Message", inquiry.message)}
   </table>

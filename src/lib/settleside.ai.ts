@@ -37,59 +37,95 @@ function getClient() {
   return client;
 }
 
+const INTAKE_FIELDS: Record<string, Record<string, unknown>> = {
+  name: { type: "string", description: "Customer's full name if stated, else empty string." },
+  email: { type: "string", description: "Email address if stated, else empty string." },
+  whatsapp: { type: "string", description: "Phone or WhatsApp number if stated, else empty." },
+  contactPreference: { type: "string", enum: ["", "whatsapp", "email", "phone"] },
+  bestTime: { type: "string", description: "Best time to reach them if stated, else empty." },
+  origin: { type: "string", description: "City (and country) they are moving from, else empty." },
+  destination: {
+    type: "string",
+    description: "City (and country) they are moving to, else empty.",
+  },
+  destinationArea: {
+    type: "string",
+    description:
+      "Neighbourhood or district at the destination (e.g. Al Reem, Saadiyat), else empty.",
+  },
+  moveDate: {
+    type: "string",
+    description:
+      "Target move date as YYYY-MM-DD. Resolve relative dates against today's date; if only a month is given, use the first day of that month. Empty string if no date is mentioned.",
+  },
+  dateFlexibility: { type: "string", enum: ["", "fixed", "flexible", "undecided"] },
+  originProperty: {
+    type: "string",
+    enum: ["", "studio", "1br", "2br", "3br", "4br+", "villa", "other"],
+    description: "Property type they are moving OUT of.",
+  },
+  originAccess: {
+    type: "string",
+    description:
+      "Access details at the origin that affect mover pricing: floor, lift/elevator, stairs, parking. Else empty.",
+  },
+  destinationProperty: {
+    type: "string",
+    enum: ["", "studio", "1br", "2br", "3br", "4br+", "villa", "other"],
+    description: "Property type they are moving INTO.",
+  },
+  destinationAccess: {
+    type: "string",
+    description: "Access details at the destination: floor, lift, stairs, parking. Else empty.",
+  },
+  inventory: {
+    type: "string",
+    description:
+      "What is being moved, in their own words: rooms of furniture, number of boxes, appliances. Else empty.",
+  },
+  specialItems: {
+    type: "string",
+    description:
+      "Items needing special handling: piano, artwork, safe, antiques, aquarium, gym equipment. Else empty.",
+  },
+  packing: { type: "string", enum: ["", "full", "partial", "self", "unsure"] },
+  storage: { type: "string", enum: ["", "yes", "no", "maybe"] },
+  household: { type: "string", enum: ["", "alone", "couple", "family", "unsure"] },
+  adults: { type: "string", description: "Number of adults moving, as digits. Else empty." },
+  children: { type: "string", description: "Number of children moving, as digits. Else empty." },
+  childrenAges: { type: "string", description: "Ages of children if stated, else empty." },
+  pet: { type: "string", enum: ["no", "dog", "cat", "multiple", "other"] },
+  petDetails: {
+    type: "string",
+    description: "Pet specifics that affect transport: breed, size/weight, count. Else empty.",
+  },
+  status: { type: "string", enum: ["", "exploring", "planning", "signed", "imminent", "arrived"] },
+  visaStatus: { type: "string", enum: ["", "not-started", "in-progress", "have-eid", "resident"] },
+  leaseStatus: { type: "string", enum: ["", "searching", "viewing", "signed", "arrived"] },
+  employerSupport: {
+    type: "string",
+    enum: ["", "none", "partial", "full", "unsure"],
+    description: "Whether an employer is paying for or contributing to the relocation.",
+  },
+  budget: { type: "string", description: "Budget or price expectation if stated, else empty." },
+  priority: { type: "string", enum: ["", "cheapest", "fastest", "hassle-free", "quality"] },
+  help: {
+    type: "array",
+    items: { type: "string", enum: [...HELP_OPTIONS] },
+    description: "Every help option the described needs clearly map to.",
+  },
+  message: {
+    type: "string",
+    description:
+      "Any remaining context worth passing to the operations team that no other field captures, in one or two sentences. Else empty string.",
+  },
+};
+
 const INTAKE_OUTPUT_SCHEMA: Record<string, unknown> = {
   type: "object",
   additionalProperties: false,
-  required: [
-    "name",
-    "email",
-    "whatsapp",
-    "origin",
-    "destination",
-    "moveDate",
-    "household",
-    "status",
-    "pet",
-    "help",
-    "message",
-  ],
-  properties: {
-    name: { type: "string", description: "Customer's full name if stated, else empty string." },
-    email: { type: "string", description: "Email address if stated, else empty string." },
-    whatsapp: {
-      type: "string",
-      description: "Phone or WhatsApp number if stated, else empty string.",
-    },
-    origin: {
-      type: "string",
-      description: "City (and country) they are moving from, else empty string.",
-    },
-    destination: {
-      type: "string",
-      description: "City (and country) they are moving to, else empty string.",
-    },
-    moveDate: {
-      type: "string",
-      description:
-        "Target move date as YYYY-MM-DD. Resolve relative dates against today's date; if only a month is given, use the first day of that month. Empty string if no date is mentioned.",
-    },
-    household: { type: "string", enum: ["", "alone", "couple", "family", "unsure"] },
-    status: {
-      type: "string",
-      enum: ["", "exploring", "planning", "signed", "imminent", "arrived"],
-    },
-    pet: { type: "string", enum: ["no", "dog", "cat", "multiple", "other"] },
-    help: {
-      type: "array",
-      items: { type: "string", enum: [...HELP_OPTIONS] },
-      description: "Every help option the described needs clearly map to.",
-    },
-    message: {
-      type: "string",
-      description:
-        "One or two plain-language sentences of remaining context worth passing to the operations team, else empty string.",
-    },
-  },
+  required: Object.keys(INTAKE_FIELDS),
+  properties: INTAKE_FIELDS,
 };
 
 function intakeSystemPrompt() {
@@ -99,11 +135,13 @@ function intakeSystemPrompt() {
 Today's date is ${today}.
 
 Rules:
-- Only extract what the customer actually said. Never invent names, contact details, dates, or places. Use an empty string ("" ), "no" for pet, or an empty help array when something is not mentioned.
+- Only extract what the customer actually said. Never invent names, contact details, dates, addresses, property sizes, or budgets. Use an empty string ("") — or "no" for pet — whenever something is not mentioned. Leaving a field empty is always better than guessing.
 - household: "alone", "couple", or "family" based on who is moving with them; "unsure" only if they say they don't know yet.
 - status: "exploring" (just researching), "planning" (actively planning), "signed" (home already secured), "imminent" (moving within roughly 30 days of today), "arrived" (already at the destination).
+- Property, access, inventory, and special items drive mover quotes: capture them whenever the customer gives any detail, in their own words.
+- employerSupport: set this whenever they mention a company, employer, or relocation package paying for any part of the move.
 - help: select every option their described needs clearly map to. Examples: sofas, beds, or furnishing a home maps to "Furniture & mattress"; cookware or day-one supplies maps to "Kitchen & essentials"; wifi, broadband, or utilities maps to "Internet & utilities"; TV mounting or assembly maps to "Handyman / installation"; shipping belongings or mover quotes maps to "Movers & shipping"; visas, schools, or daycare maps to "Family & school search (optional)"; any pet maps to "Pet relocation (optional)".
-- message: condense any remaining relevant context (budget, priorities, special items, constraints) into one or two sentences for the operations team. Empty string if nothing remains.`;
+- message: only what no other field captures. If a detail belongs in a dedicated field (budget, special items, access, pet details), put it there instead and leave message empty.`;
 }
 
 type StructuredCallResult =
@@ -584,7 +622,7 @@ export async function parseMoveIntake(description: string): Promise<MoveIntakePa
     system: intakeSystemPrompt(),
     user: description,
     schema: INTAKE_OUTPUT_SCHEMA,
-    maxTokens: 1024,
+    maxTokens: 2048,
   });
 
   if (!call.ok) {

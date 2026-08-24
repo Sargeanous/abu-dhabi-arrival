@@ -20,12 +20,41 @@ export type HelpOption = (typeof HELP_OPTIONS)[number];
 const isHelpOption = (value: string): value is HelpOption =>
   (HELP_OPTIONS as readonly string[]).includes(value);
 
+// Intake is deliberately comprehensive: everything a provider needs to quote
+// should be captured here, so the first contact with a customer delivers
+// quotes rather than asking follow-up questions. All fields beyond name,
+// email, and destination are optional so the form still converts.
+export const PROPERTY_TYPES = [
+  "",
+  "studio",
+  "1br",
+  "2br",
+  "3br",
+  "4br+",
+  "villa",
+  "other",
+] as const;
+export const DATE_FLEXIBILITY = ["", "fixed", "flexible", "undecided"] as const;
+export const PACKING_OPTIONS = ["", "full", "partial", "self", "unsure"] as const;
+export const YES_NO_MAYBE = ["", "yes", "no", "maybe"] as const;
+export const VISA_STATUSES = ["", "not-started", "in-progress", "have-eid", "resident"] as const;
+export const LEASE_STATUSES = ["", "searching", "viewing", "signed", "arrived"] as const;
+export const EMPLOYER_SUPPORT = ["", "none", "partial", "full", "unsure"] as const;
+export const MOVE_PRIORITIES = ["", "cheapest", "fastest", "hassle-free", "quality"] as const;
+export const CONTACT_PREFERENCES = ["", "whatsapp", "email", "phone"] as const;
+
 export const inquirySchema = z.object({
+  // Contact
   name: z.string().trim().min(2, "Please enter your name.").max(120),
   email: z.string().trim().email("Please enter a valid email.").max(160),
   whatsapp: optionalText(80),
+  contactPreference: z.enum(CONTACT_PREFERENCES).catch("").default(""),
+  bestTime: optionalText(80),
+
+  // Route and timing
   origin: optionalText(120),
   destination: z.string().trim().min(2, "Please enter your destination.").max(120),
+  destinationArea: optionalText(120),
   moveDate: z
     .string()
     .trim()
@@ -33,9 +62,37 @@ export const inquirySchema = z.object({
       message: "Move date must use YYYY-MM-DD.",
     })
     .default(""),
+  dateFlexibility: z.enum(DATE_FLEXIBILITY).catch("").default(""),
+
+  // Properties (drives mover pricing)
+  originProperty: z.enum(PROPERTY_TYPES).catch("").default(""),
+  originAccess: optionalText(200),
+  destinationProperty: z.enum(PROPERTY_TYPES).catch("").default(""),
+  destinationAccess: optionalText(200),
+
+  // What is moving
+  inventory: optionalText(600),
+  specialItems: optionalText(400),
+  packing: z.enum(PACKING_OPTIONS).catch("").default(""),
+  storage: z.enum(YES_NO_MAYBE).catch("").default(""),
+
+  // Household
   household: optionalText(40),
-  status: optionalText(40),
+  adults: optionalText(10),
+  children: optionalText(10),
+  childrenAges: optionalText(80),
   pet: z.string().trim().max(40).default("no"),
+  petDetails: optionalText(200),
+
+  // Admin status
+  status: optionalText(40),
+  visaStatus: z.enum(VISA_STATUSES).catch("").default(""),
+  leaseStatus: z.enum(LEASE_STATUSES).catch("").default(""),
+  employerSupport: z.enum(EMPLOYER_SUPPORT).catch("").default(""),
+
+  // Priorities
+  budget: optionalText(120),
+  priority: z.enum(MOVE_PRIORITIES).catch("").default(""),
   help: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
   message: optionalText(2000),
 });
@@ -402,15 +459,34 @@ export const moveIntakeDraftSchema = z.object({
   whatsapp: z.string().trim().max(80).catch("").default(""),
   origin: z.string().trim().max(120).catch("").default(""),
   destination: z.string().trim().max(120).catch("").default(""),
+  destinationArea: z.string().trim().max(120).catch("").default(""),
   moveDate: z
     .string()
     .trim()
     .catch("")
     .default("")
     .transform((value) => (/^\d{4}-\d{2}-\d{2}$/.test(value) ? value : "")),
+  dateFlexibility: z.enum(DATE_FLEXIBILITY).catch(""),
+  originProperty: z.enum(PROPERTY_TYPES).catch(""),
+  originAccess: z.string().trim().max(200).catch("").default(""),
+  destinationProperty: z.enum(PROPERTY_TYPES).catch(""),
+  destinationAccess: z.string().trim().max(200).catch("").default(""),
+  inventory: z.string().trim().max(600).catch("").default(""),
+  specialItems: z.string().trim().max(400).catch("").default(""),
+  packing: z.enum(PACKING_OPTIONS).catch(""),
+  storage: z.enum(YES_NO_MAYBE).catch(""),
   household: z.enum(["", "alone", "couple", "family", "unsure"]).catch(""),
-  status: z.enum(["", "exploring", "planning", "signed", "imminent", "arrived"]).catch(""),
+  adults: z.string().trim().max(10).catch("").default(""),
+  children: z.string().trim().max(10).catch("").default(""),
+  childrenAges: z.string().trim().max(80).catch("").default(""),
   pet: z.enum(["no", "dog", "cat", "multiple", "other"]).catch("no"),
+  petDetails: z.string().trim().max(200).catch("").default(""),
+  status: z.enum(["", "exploring", "planning", "signed", "imminent", "arrived"]).catch(""),
+  visaStatus: z.enum(VISA_STATUSES).catch(""),
+  leaseStatus: z.enum(LEASE_STATUSES).catch(""),
+  employerSupport: z.enum(EMPLOYER_SUPPORT).catch(""),
+  budget: z.string().trim().max(120).catch("").default(""),
+  priority: z.enum(MOVE_PRIORITIES).catch(""),
   help: z
     .array(z.string())
     .catch([])

@@ -821,12 +821,33 @@ type FormState = {
   name: string;
   email: string;
   whatsapp: string;
+  contactPreference: string;
+  bestTime: string;
   origin: string;
   destination: string;
+  destinationArea: string;
   moveDate: string;
+  dateFlexibility: string;
+  originProperty: string;
+  originAccess: string;
+  destinationProperty: string;
+  destinationAccess: string;
+  inventory: string;
+  specialItems: string;
+  packing: string;
+  storage: string;
   household: string;
-  status: string;
+  adults: string;
+  children: string;
+  childrenAges: string;
   pet: string;
+  petDetails: string;
+  status: string;
+  visaStatus: string;
+  leaseStatus: string;
+  employerSupport: string;
+  budget: string;
+  priority: string;
   help: string[];
   message: string;
 };
@@ -835,15 +856,66 @@ const EMPTY_FORM: FormState = {
   name: "",
   email: "",
   whatsapp: "",
+  contactPreference: "",
+  bestTime: "",
   origin: "",
   destination: "",
+  destinationArea: "",
   moveDate: "",
+  dateFlexibility: "",
+  originProperty: "",
+  originAccess: "",
+  destinationProperty: "",
+  destinationAccess: "",
+  inventory: "",
+  specialItems: "",
+  packing: "",
+  storage: "",
   household: "",
-  status: "",
+  adults: "",
+  children: "",
+  childrenAges: "",
   pet: "no",
+  petDetails: "",
+  status: "",
+  visaStatus: "",
+  leaseStatus: "",
+  employerSupport: "",
+  budget: "",
+  priority: "",
   help: [],
   message: "",
 };
+
+const PROPERTY_OPTIONS: Array<[string, string]> = [
+  ["studio", "Studio"],
+  ["1br", "1 bedroom"],
+  ["2br", "2 bedrooms"],
+  ["3br", "3 bedrooms"],
+  ["4br+", "4+ bedrooms"],
+  ["villa", "Villa"],
+  ["other", "Other"],
+];
+
+function FormSection({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border-t border-border pt-6">
+      <div className="mb-4">
+        <h4 className="font-serif text-lg text-foreground">{title}</h4>
+        {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
 
 function AiIntakeAssist({ onDraft }: { onDraft: (draft: MoveIntakeDraft) => void }) {
   const parseIntakeFn = useServerFn(parseMoveIntakeDraft);
@@ -886,7 +958,12 @@ function AiIntakeAssist({ onDraft }: { onDraft: (draft: MoveIntakeDraft) => void
         className="mt-3 bg-background"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        placeholder='e.g. "We are a family of four moving from London to Abu Dhabi in early September with our dog. We need movers, beds and a sofa, and internet working on day one."'
+        placeholder={
+          'e.g. "Family of four moving from London to a 2-bed on Al Reem in early September. ' +
+          "Coming from a 3rd-floor flat with a lift, about 25 boxes plus a sofa and beds. " +
+          "We have a golden retriever, need full packing, and my employer covers part of it. " +
+          'Budget around AED 20,000."'
+        }
       />
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <Button
@@ -1087,20 +1164,43 @@ function InquiryForm() {
   }
 
   function applyDraft(draft: MoveIntakeDraft) {
-    setForm((f) => ({
-      ...f,
-      name: draft.name || f.name,
-      email: draft.email || f.email,
-      whatsapp: draft.whatsapp || f.whatsapp,
-      origin: draft.origin || f.origin,
-      destination: draft.destination || f.destination,
-      moveDate: draft.moveDate || f.moveDate,
-      household: draft.household || f.household,
-      status: draft.status || f.status,
-      pet: draft.pet !== "no" ? draft.pet : f.pet,
-      help: draft.help.length > 0 ? [...draft.help] : f.help,
-      message: draft.message || f.message,
-    }));
+    setForm((f) => {
+      // AI values only fill gaps; anything already typed by the user wins.
+      const keep = (drafted: string, current: string) => drafted || current;
+      return {
+        ...f,
+        name: keep(draft.name, f.name),
+        email: keep(draft.email, f.email),
+        whatsapp: keep(draft.whatsapp, f.whatsapp),
+        origin: keep(draft.origin, f.origin),
+        destination: keep(draft.destination, f.destination),
+        destinationArea: keep(draft.destinationArea, f.destinationArea),
+        moveDate: keep(draft.moveDate, f.moveDate),
+        dateFlexibility: keep(draft.dateFlexibility, f.dateFlexibility),
+        originProperty: keep(draft.originProperty, f.originProperty),
+        originAccess: keep(draft.originAccess, f.originAccess),
+        destinationProperty: keep(draft.destinationProperty, f.destinationProperty),
+        destinationAccess: keep(draft.destinationAccess, f.destinationAccess),
+        inventory: keep(draft.inventory, f.inventory),
+        specialItems: keep(draft.specialItems, f.specialItems),
+        packing: keep(draft.packing, f.packing),
+        storage: keep(draft.storage, f.storage),
+        household: keep(draft.household, f.household),
+        adults: keep(draft.adults, f.adults),
+        children: keep(draft.children, f.children),
+        childrenAges: keep(draft.childrenAges, f.childrenAges),
+        pet: draft.pet !== "no" ? draft.pet : f.pet,
+        petDetails: keep(draft.petDetails, f.petDetails),
+        status: keep(draft.status, f.status),
+        visaStatus: keep(draft.visaStatus, f.visaStatus),
+        leaseStatus: keep(draft.leaseStatus, f.leaseStatus),
+        employerSupport: keep(draft.employerSupport, f.employerSupport),
+        budget: keep(draft.budget, f.budget),
+        priority: keep(draft.priority, f.priority),
+        help: draft.help.length > 0 ? [...draft.help] : f.help,
+        message: keep(draft.message, f.message),
+      };
+    });
   }
 
   function toggleHelp(label: string) {
@@ -1151,7 +1251,7 @@ function InquiryForm() {
         </span>
         <div className="h-px flex-1 bg-border" />
       </div>
-      <form onSubmit={handleSubmit} className="grid gap-5">
+      <form onSubmit={handleSubmit} className="grid gap-6">
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Name" required>
             <Input
@@ -1174,73 +1274,333 @@ function InquiryForm() {
             <Input
               value={form.whatsapp}
               onChange={(e) => update("whatsapp", e.target.value)}
-              placeholder="+1 ..."
+              placeholder="+971 ..."
             />
           </Field>
-          <Field label="Moving from">
-            <Input
-              value={form.origin}
-              onChange={(e) => update("origin", e.target.value)}
-              placeholder="City, country"
-            />
-          </Field>
-          <Field label="Moving to" required>
-            <Input
-              required
-              value={form.destination}
-              onChange={(e) => update("destination", e.target.value)}
-              placeholder="City, country"
-            />
-          </Field>
-          <Field label="Target move date">
-            <Input
-              type="date"
-              value={form.moveDate}
-              onChange={(e) => update("moveDate", e.target.value)}
-            />
-          </Field>
-          <Field label="Moving as">
-            <Select value={form.household} onValueChange={(v) => update("household", v)}>
+          <Field label="Best way to reach you">
+            <Select
+              value={form.contactPreference}
+              onValueChange={(v) => update("contactPreference", v)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="alone">Alone</SelectItem>
-                <SelectItem value="couple">Couple</SelectItem>
-                <SelectItem value="family">Family</SelectItem>
-                <SelectItem value="unsure">Not sure yet</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Where are you in the process?">
-            <Select value={form.status} onValueChange={(v) => update("status", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="exploring">Just exploring</SelectItem>
-                <SelectItem value="planning">Actively planning</SelectItem>
-                <SelectItem value="signed">Home secured</SelectItem>
-                <SelectItem value="imminent">Moving in 30 days</SelectItem>
-                <SelectItem value="arrived">Already arrived</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Moving with a pet?">
-            <Select value={form.pet} onValueChange={(v) => update("pet", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="no">No</SelectItem>
-                <SelectItem value="dog">Yes, dog</SelectItem>
-                <SelectItem value="cat">Yes, cat</SelectItem>
-                <SelectItem value="multiple">Yes, multiple pets</SelectItem>
-                <SelectItem value="other">Yes, other</SelectItem>
+                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="phone">Phone call</SelectItem>
               </SelectContent>
             </Select>
           </Field>
         </div>
+
+        <FormSection
+          title="Your move"
+          hint="Where you're going and when. The more precise, the more accurate your quotes."
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Moving from">
+              <Input
+                value={form.origin}
+                onChange={(e) => update("origin", e.target.value)}
+                placeholder="City, country"
+              />
+            </Field>
+            <Field label="Moving to" required>
+              <Input
+                required
+                value={form.destination}
+                onChange={(e) => update("destination", e.target.value)}
+                placeholder="City, country"
+              />
+            </Field>
+            <Field label="Area or neighbourhood">
+              <Input
+                value={form.destinationArea}
+                onChange={(e) => update("destinationArea", e.target.value)}
+                placeholder="e.g. Al Reem Island, Saadiyat"
+              />
+            </Field>
+            <Field label="Target move date">
+              <Input
+                type="date"
+                value={form.moveDate}
+                onChange={(e) => update("moveDate", e.target.value)}
+              />
+            </Field>
+            <Field label="How firm is that date?">
+              <Select
+                value={form.dateFlexibility}
+                onValueChange={(v) => update("dateFlexibility", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">Fixed, can't change</SelectItem>
+                  <SelectItem value="flexible">Flexible by a week or two</SelectItem>
+                  <SelectItem value="undecided">Not decided yet</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Where are you in the process?">
+              <Select value={form.status} onValueChange={(v) => update("status", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="exploring">Just exploring</SelectItem>
+                  <SelectItem value="planning">Actively planning</SelectItem>
+                  <SelectItem value="signed">Home secured</SelectItem>
+                  <SelectItem value="imminent">Moving in 30 days</SelectItem>
+                  <SelectItem value="arrived">Already arrived</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
+        </FormSection>
+
+        <FormSection
+          title="Your home, both ends"
+          hint="Movers price on size and access. Filling this in is the difference between an estimate and a real quote."
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Current home">
+              <Select
+                value={form.originProperty}
+                onValueChange={(v) => update("originProperty", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROPERTY_OPTIONS.map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="New home">
+              <Select
+                value={form.destinationProperty}
+                onValueChange={(v) => update("destinationProperty", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROPERTY_OPTIONS.map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Access at current home">
+              <Input
+                value={form.originAccess}
+                onChange={(e) => update("originAccess", e.target.value)}
+                placeholder="e.g. 3rd floor, lift, street parking"
+              />
+            </Field>
+            <Field label="Access at new home">
+              <Input
+                value={form.destinationAccess}
+                onChange={(e) => update("destinationAccess", e.target.value)}
+                placeholder="e.g. 12th floor, service lift booked"
+              />
+            </Field>
+          </div>
+        </FormSection>
+
+        <FormSection title="What's moving" hint="Roughly what needs to be packed and shipped.">
+          <div className="grid gap-5">
+            <Field label="What are you moving?">
+              <Textarea
+                rows={2}
+                value={form.inventory}
+                onChange={(e) => update("inventory", e.target.value)}
+                placeholder="e.g. 2 bedrooms of furniture, sofa, fridge, about 25 boxes"
+              />
+            </Field>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Anything fragile or special?">
+                <Input
+                  value={form.specialItems}
+                  onChange={(e) => update("specialItems", e.target.value)}
+                  placeholder="e.g. piano, artwork, safe, aquarium"
+                />
+              </Field>
+              <Field label="Do you need packing?">
+                <Select value={form.packing} onValueChange={(v) => update("packing", v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full">Full packing service</SelectItem>
+                    <SelectItem value="partial">Fragile items only</SelectItem>
+                    <SelectItem value="self">I'll pack myself</SelectItem>
+                    <SelectItem value="unsure">Not sure yet</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Storage needed between homes?">
+                <Select value={form.storage} onValueChange={(v) => update("storage", v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no">No</SelectItem>
+                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="maybe">Maybe</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Budget in mind">
+                <Input
+                  value={form.budget}
+                  onChange={(e) => update("budget", e.target.value)}
+                  placeholder="e.g. AED 10,000 for the whole move"
+                />
+              </Field>
+            </div>
+          </div>
+        </FormSection>
+
+        <FormSection
+          title="Who's moving"
+          hint="So we can plan schools, pets, and family logistics."
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Moving as">
+              <Select value={form.household} onValueChange={(v) => update("household", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="alone">Alone</SelectItem>
+                  <SelectItem value="couple">Couple</SelectItem>
+                  <SelectItem value="family">Family</SelectItem>
+                  <SelectItem value="unsure">Not sure yet</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Adults / children">
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  value={form.adults}
+                  onChange={(e) => update("adults", e.target.value)}
+                  placeholder="Adults"
+                  inputMode="numeric"
+                />
+                <Input
+                  value={form.children}
+                  onChange={(e) => update("children", e.target.value)}
+                  placeholder="Children"
+                  inputMode="numeric"
+                />
+              </div>
+            </Field>
+            <Field label="Children's ages">
+              <Input
+                value={form.childrenAges}
+                onChange={(e) => update("childrenAges", e.target.value)}
+                placeholder="e.g. 4 and 7"
+              />
+            </Field>
+            <Field label="Moving with a pet?">
+              <Select value={form.pet} onValueChange={(v) => update("pet", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no">No</SelectItem>
+                  <SelectItem value="dog">Yes, dog</SelectItem>
+                  <SelectItem value="cat">Yes, cat</SelectItem>
+                  <SelectItem value="multiple">Yes, multiple pets</SelectItem>
+                  <SelectItem value="other">Yes, other</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            {form.pet !== "no" && (
+              <div className="sm:col-span-2">
+                <Field label="Tell us about your pet">
+                  <Input
+                    value={form.petDetails}
+                    onChange={(e) => update("petDetails", e.target.value)}
+                    placeholder="e.g. golden retriever, 30kg, vaccinations up to date"
+                  />
+                </Field>
+              </div>
+            )}
+          </div>
+        </FormSection>
+
+        <FormSection
+          title="Paperwork & priorities"
+          hint="This shapes the order of your plan and who we approach first."
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Visa / Emirates ID status">
+              <Select value={form.visaStatus} onValueChange={(v) => update("visaStatus", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="not-started">Not started</SelectItem>
+                  <SelectItem value="in-progress">In progress</SelectItem>
+                  <SelectItem value="have-eid">Have Emirates ID</SelectItem>
+                  <SelectItem value="resident">Already a resident</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Housing status">
+              <Select value={form.leaseStatus} onValueChange={(v) => update("leaseStatus", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="searching">Still searching</SelectItem>
+                  <SelectItem value="viewing">Viewing places</SelectItem>
+                  <SelectItem value="signed">Lease signed</SelectItem>
+                  <SelectItem value="arrived">Already moved in</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Is your employer covering any of it?">
+              <Select
+                value={form.employerSupport}
+                onValueChange={(v) => update("employerSupport", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No, paying myself</SelectItem>
+                  <SelectItem value="partial">Partly covered</SelectItem>
+                  <SelectItem value="full">Full relocation package</SelectItem>
+                  <SelectItem value="unsure">Not sure yet</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="What matters most?">
+              <Select value={form.priority} onValueChange={(v) => update("priority", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cheapest">Lowest cost</SelectItem>
+                  <SelectItem value="fastest">Speed</SelectItem>
+                  <SelectItem value="hassle-free">Least hassle for me</SelectItem>
+                  <SelectItem value="quality">Best quality</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
+        </FormSection>
 
         <div>
           <Label className="text-sm font-medium text-foreground">What do you want help with?</Label>
